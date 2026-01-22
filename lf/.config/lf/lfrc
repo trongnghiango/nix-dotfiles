@@ -1,0 +1,144 @@
+# --- CẤU HÌNH CƠ BẢN ---
+set ifs "\n"
+set scrolloff 10
+set icons
+set period 1
+set hiddenfiles ".*:*.aux:*.log:*.bbl:*.bcf:*.blg:*.run.xml"
+set autoquit true
+
+set info size:time
+
+# --- CẤU HÌNH PREVIEW (Xem trước) ---
+set previewer '~/.config/lf/scope'
+set cleaner '~/.config/lf/cleaner'
+
+# --- COMMANDS (LỆNH TỰ ĐỊNH NGHĨA) ---
+
+# 1. Mở file thông minh
+cmd open ${{
+    case $(file --mime-type "$(readlink -f $f)" -b) in
+        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet) localc $fx ;;
+        image/vnd.djvu|application/pdf|application/postscript|application/epub+zip) setsid -f zathura $fx >/dev/null 2>&1 ;;
+        text/*|application/json|inode/x-empty|application/x-subrip) $EDITOR $fx;;
+        image/x-xcf) setsid -f gimp $f >/dev/null 2>&1 ;;
+        image/svg+xml) display -- $f ;;
+        image/*) rotdir $f | grep -i "\.\(png\|jpg\|jpeg\|gif\|webp\|avif\|tif\|ico\)\(_large\)*$" |
+            setsid -f nsxiv -aio 2>/dev/null & ;;
+							audio/*|video/x-ms-asf) mpv --no-config --no-video --term-osd-bar --term-osd-bar-chars="[━━ ]" "$f" ;;
+						video/*) mpv --no-config --term-osd-bar --term-osd-bar-chars="[━━ ]" "$f" ;;
+        application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.oasis.opendocument.text|application/vnd.oasis.opendocument.spreadsheet|application/vnd.oasis.opendocument.presentation) setsid -f libreoffice $fx >/dev/null 2>&1 ;;
+        application/octet-stream) case ${f##*.} in
+            doc|docx|xls|xlsx|odt|ppt|pptx) setsid -f libreoffice $fx >/dev/null 2>&1 ;;
+            *) setsid -f zathura $fx >/dev/null 2>&1 ;;
+        esac ;;
+        *) for f in $fx; do setsid -f $OPENER $f >/dev/null 2>&1; done;;
+    esac
+}}
+
+# 2. Tạo thư mục
+cmd mkdir $mkdir -p "$@"
+
+# 3. Giải nén
+cmd extract ${{
+    clear; tput cup $(($(tput lines)/3)); tput bold
+    set -f
+    printf "%s\n\t" "$fx"
+    printf "Extract (Giải nén)? [y/N]: "
+    read ans
+    [ $ans = "y" ] && {
+        case $fx in
+            *.tar.bz2)   tar xjf $fx     ;;
+            *.tar.gz)    tar xzf $fx     ;;
+            *.bz2)       bunzip2 $fx     ;;
+            *.rar)       unrar e $fx     ;;
+            *.gz)        gunzip $fx      ;;
+            *.tar)       tar xf $fx      ;;
+            *.zip)       unzip $fx       ;;
+            *.7z)        7z x $fx        ;;
+            *)           echo "Không hỗ trợ định dạng này." ;;
+        esac
+    }
+}}
+
+# 4. Xóa file
+cmd delete ${{
+    clear; tput cup $(($(tput lines)/3)); tput bold
+    set -f
+    printf "%s\n\t" "$fx"
+    printf "Delete (Xóa vĩnh viễn)? [y/N]: "
+    read ans
+    [ $ans = "y" ] && rm -rf -- $fx
+}}
+
+# 5. Đổi tên hàng loạt
+cmd bulkrename ${{
+    tmpfile_old="$(mktemp)"
+    tmpfile_new="$(mktemp)"
+    [ -n "$fs" ] && fs=$(basename -a $fs) || fs=$(ls)
+    echo "$fs" > "$tmpfile_old"
+    echo "$fs" > "$tmpfile_new"
+    $EDITOR "$tmpfile_new"
+    [ "$(wc -l < "$tmpfile_old")" -eq "$(wc -l < "$tmpfile_new")" ] || { rm -f "$tmpfile_old" "$tmpfile_new"; exit 1; }
+    paste "$tmpfile_old" "$tmpfile_new" | while IFS="$(printf '\t')" read -r src dst
+    do
+        [ "$src" = "$dst" ] || [ -e "$dst" ] || mv -- "$src" "$dst"
+    done
+    rm -f "$tmpfile_old" "$tmpfile_new"
+    lf -remote "send $id unselect"
+}}
+
+# --- PHÍM TẮT (BINDINGS) ---
+map <c-f> $lf -remote "send $id select \"$(fzf)\""
+map H cd ~
+map g top
+map D delete
+map E extract
+map <c-n> push :mkdir<space>""<left>
+map <c-r> reload
+map <c-s> set hidden!
+map <enter> shell
+map x $$f
+map X !$f
+
+# Rename shortcuts
+map A :rename; cmd-end
+map c push A<c-u>
+map I :rename; cmd-home
+map i :rename
+map B bulkrename
+
+# Navigation
+map <c-e> down
+map <c-y> up
+
+# Clipboard
+map U $printf "%s" "$fx" | xclip -selection clipboard
+map u $printf "%s" "$fx" | sed 's/.*\///' | xclip -selection clipboard
+
+
+# --- CẤU HÌNH SẮP XẾP (SORTING) ---
+# 1. Sắp xếp theo Kích thước (Size)
+# Mặc định lf xếp bé -> lớn. Lệnh này chỉnh thành lớn -> bé (reverse true)
+map os :set sortby size; set reverse true
+
+# 2. Sắp xếp theo Thời gian (Time)
+# Mặc định lf xếp cũ -> mới. Lệnh này chỉnh thành mới -> cũ (reverse true)
+map ot :set sortby time; set reverse true
+
+# 3. Sắp xếp theo Tên (Natural - Mặc định)
+# Trả về A-Z (reverse false)
+map on :set sortby natural; set reverse false
+
+# 4. Sắp xếp theo Đuôi file (Extension)
+map oe :set sortby ext
+
+# 5. Phím tắt để Đảo ngược (Toggle Reverse) thủ công
+# Bấm 'r' để đảo ngược trạng thái hiện tại (bất kể đang sort theo gì)
+map r :set reverse!
+
+
+# Hidden
+map . :set hidden!
+
+# Import shortcuts
+source "~/.config/lf/shortcutrc"

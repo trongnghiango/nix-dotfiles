@@ -1,0 +1,125 @@
+{
+  "nodes": {
+    "dmenu-src": {
+      "flake": false,
+      "locked": {
+        "dir": "dmenu",
+        "lastModified": 1769062900,
+        "narHash": "sha256-ECvw2hz3ArCzTZz7sjisLV+i8BG6n6O5Gcev86pcL0g=",
+        "owner": "trongnghiango",
+        "repo": "nix-suckless",
+        "rev": "62d7ae1dee12b9b1b666ddc9f6d2cdf2b6ecd552",
+        "type": "github"
+      },
+      "original": {
+        "dir": "dmenu",
+        "owner": "trongnghiango",
+        "repo": "nix-suckless",
+        "type": "github"
+      }
+    },
+    "dwm-src": {
+      "flake": false,
+      "locked": {
+        "dir": "dwm",
+        "lastModified": 1769062900,
+        "narHash": "sha256-ECvw2hz3ArCzTZz7sjisLV+i8BG6n6O5Gcev86pcL0g=",
+        "owner": "trongnghiango",
+        "repo": "nix-suckless",
+        "rev": "62d7ae1dee12b9b1b666ddc9f6d2cdf2b6ecd552",
+        "type": "github"
+      },
+      "original": {
+        "dir": "dwm",
+        "owner": "trongnghiango",
+        "repo": "nix-suckless",
+        "type": "github"
+      }
+    },
+    "dwmblocks-src": {
+      "flake": false,
+      "locked": {
+        "dir": "dwmblocks",
+        "lastModified": 1769062900,
+        "narHash": "sha256-ECvw2hz3ArCzTZz7sjisLV+i8BG6n6O5Gcev86pcL0g=",
+        "owner": "trongnghiango",
+        "repo": "nix-suckless",
+        "rev": "62d7ae1dee12b9b1b666ddc9f6d2cdf2b6ecd552",
+        "type": "github"
+      },
+      "original": {
+        "dir": "dwmblocks",
+        "owner": "trongnghiango",
+        "repo": "nix-suckless",
+        "type": "github"
+      }
+    },
+    "home-manager": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1768949235,
+        "narHash": "sha256-TtjKgXyg1lMfh374w5uxutd6Vx2P/hU81aEhTxrO2cg=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "75ed713570ca17427119e7e204ab3590cc3bf2a5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "ref": "release-25.11",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1768940263,
+        "narHash": "sha256-sJERJIYTKPFXkoz/gBaBtRKke82h4DkX3BBSsKbfbvI=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "3ceaaa8bc963ced4d830e06ea2d0863b6490ff03",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-25.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "dmenu-src": "dmenu-src",
+        "dwm-src": "dwm-src",
+        "dwmblocks-src": "dwmblocks-src",
+        "home-manager": "home-manager",
+        "nixpkgs": "nixpkgs",
+        "st-src": "st-src"
+      }
+    },
+    "st-src": {
+      "flake": false,
+      "locked": {
+        "dir": "st",
+        "lastModified": 1769062900,
+        "narHash": "sha256-ECvw2hz3ArCzTZz7sjisLV+i8BG6n6O5Gcev86pcL0g=",
+        "owner": "trongnghiango",
+        "repo": "nix-suckless",
+        "rev": "62d7ae1dee12b9b1b666ddc9f6d2cdf2b6ecd552",
+        "type": "github"
+      },
+      "original": {
+        "dir": "st",
+        "owner": "trongnghiango",
+        "repo": "nix-suckless",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

@@ -1,0 +1,77 @@
+#!/bin/sh
+
+# ===============================================================
+# 1. KHỞI TẠO MÔI TRƯỜNG & DBUS
+# ===============================================================
+
+# Cập nhật biến môi trường hệ thống (Quan trọng cho cả 2 distro)
+if command -v dbus-update-activation-environment >/dev/null 2>&1; then
+  dbus-update-activation-environment --systemd --all
+fi
+
+# Load cấu hình cá nhân
+if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/x11/xprofile" ]; then
+  . "${XDG_CONFIG_HOME:-$HOME/.config}/x11/xprofile"
+elif [ -f "$HOME/.xprofile" ]; then
+  . "$HOME/.xprofile"
+fi
+
+# ===============================================================
+# 2. XỬ LÝ AUDIO (LOGIC THÔNG MINH CHO CẢ ARCH & NIXOS)
+# ===============================================================
+
+# Hàm khởi động Audio thủ công (Dành cho Arch/Void...)
+start_audio_manual() {
+  # 1. Giết sạch tiến trình cũ (Fix lỗi re-login)
+  killall -9 pipewire wireplumber pipewire-pulse 2>/dev/null
+
+  # 2. Đợi một chút cho socket được giải phóng
+  sleep 0.5
+
+  # 3. Chạy lại từ đầu (Dùng lệnh command -v để tìm đúng đường dẫn)
+  # Wireplumber phải chạy sau pipewire
+  if command -v pipewire >/dev/null; then
+    pipewire &
+
+    if command -v wireplumber >/dev/null; then
+      wireplumber &
+    fi
+
+    if command -v pipewire-pulse >/dev/null; then
+      pipewire-pulse &
+    fi
+  fi
+}
+
+# Hàm khởi động Audio qua Systemd (Dành riêng cho NixOS)
+start_audio_systemd() {
+  # NixOS quản lý socket chặt chẽ, phải dùng systemctl
+  systemctl --user reset-failed pipewire wireplumber pipewire-pulse 2>/dev/null
+  systemctl --user restart pipewire wireplumber pipewire-pulse
+}
+
+# --- PHÁT HIỆN DISTRO ---
+if [ -f /etc/nixos/configuration.nix ]; then
+  # -> Đang chạy trên NixOS
+  (sleep 1 && start_audio_systemd && sleep 2 && pkill -RTMIN+11 dwmblocks) &
+else
+  # -> Đang chạy trên Arch (hoặc distro khác)
+  # Dùng cách thủ công vì nó ổn định với setup hiện tại của bạn
+  (start_audio_manual && sleep 2 && pkill -RTMIN+11 dwmblocks) &
+fi
+
+# ===============================================================
+# 3. ỨNG DỤNG NỀN
+# ===============================================================
+
+if ! pgrep -x "trayer" >/dev/null; then
+  trayer --edge top --align left --widthtype request --padding 0 \
+    --SetDockType true --tint 0x222222 --height 24 \
+    --transparent true --alpha 0 &
+fi
+
+# ===============================================================
+# 4. KHỞI ĐỘNG DWM
+# ===============================================================
+
+exec ssh-agent $HOME/.local/bin/dwm

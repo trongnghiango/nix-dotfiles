@@ -1,0 +1,37 @@
+#!/bin/sh
+
+case $BUTTON in
+    1) notify-send "🔋 Battery Info" "Status: $(cat /sys/class/power_supply/BAT0/status)
+Capacity: $(cat /sys/class/power_supply/BAT0/capacity)%" ;;
+    3) notify-send "🔋 Battery module" "🔋: discharging
+🛑: not charging
+♻: stagnant charge
+🔌: charging
+⚡: charged
+❗: battery very low!
+- Scroll to adjust brightness." ;;
+    4) brightnessctl set +1% ;;
+    5) brightnessctl set 1%- ;;
+    6) setsid -f "$TERMINAL" -e "$EDITOR" "$0" ;;
+esac
+
+BATTERY="/sys/class/power_supply/BAT0"
+[ ! -d "$BATTERY" ] && BATTERY="/sys/class/power_supply/BAT1"
+
+STATUS_TEXT=$(cat "$BATTERY/status" 2>/dev/null)
+case "$STATUS_TEXT" in
+    "Full") ICON="⚡" ;;
+    "Discharging") ICON="🔋" ;;
+    "Charging") ICON="🔌" ;;
+    "Not charging") ICON="🛑" ;;
+    "Unknown") ICON="♻️" ;;
+    *) ICON="🔋" ;;
+esac
+
+CAPACITY=$(cat "$BATTERY/capacity" 2>/dev/null)
+WARN=""
+if [ "$STATUS_TEXT" = "Discharging" ] && [ "$CAPACITY" -le 25 ]; then
+    WARN="❗"
+fi
+
+printf "%s%s%d%%\n" "$ICON" "$WARN" "$CAPACITY"
