@@ -1,5 +1,5 @@
 {
-  description = "NixOS Configuration for Thinkbox";
+  description = "NixOS Configuration for Thinkbox BBBimm";
 
   inputs = {
     # Nguồn gói phần mềm chính của NixOS (bản unstable mới nhất)

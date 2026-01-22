@@ -124,45 +124,12 @@ in
     guiApps
     ++ systemTools
     ++ audioTools
-    ++ devRuntimes
-    ++ lspServers
+    # ++ devRuntimes
+    #++ lspServers
     ++ formattersAndLinters
     ++ neovimEssentials;
 
   # --- CẤU HÌNH BRAVE TỐI ƯU CHO THINKPAD X230 ---
-  programs.brave = {
-    enable = true;
-
-    # Các tham số khởi động để ép Brave dùng GPU HD4000 hiệu quả
-    commandLineArgs = [
-      # Bật giải mã video bằng phần cứng (VA-API)
-      "--enable-features=VaapiVideoDecodeLinuxGL"
-      "--use-gl=egl"
-
-      # Bỏ qua danh sách đen GPU (vì HD4000 cũ hay bị Google chặn tính năng)
-      "--ignore-gpu-blocklist"
-      "--enable-gpu-rasterization"
-      "--enable-zero-copy"
-
-      # Tiết kiệm RAM
-      "--process-per-site"
-    ];
-
-    # Tự động cài các Extension quan trọng
-    extensions = [
-      # 1. uBlock Origin (Chặn quảng cáo -> Giảm tải CPU load trang web)
-      { id = "cjpalhdlnbpafiamejdnhcphjbkeiagm"; }
-
-      # 2. enhanced-h264ify (QUAN TRỌNG NHẤT CHO X230)
-      # Extension này ép YouTube phát chuẩn H.264 (HD4000 có hỗ trợ phần cứng)
-      # thay vì VP9 (HD4000 không hỗ trợ -> CPU phải gánh 100%)
-      { id = "omkfmpieigblcllmkgbflkikinpkodjg"; }
-
-      # 3. Vimium (Lướt web bằng bàn phím - Tùy chọn, hợp với DWM)
-      { id = "dbepggeogbaibhgnhhndojpepiihcmeb"; }
-    ];
-  };
-
   # 3. Symlink Configuration (Clean Home Strategy)
   # ---------------------------------------------------------------------
   home.file = {

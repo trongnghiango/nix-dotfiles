@@ -18,4 +18,5 @@
   networking.networkmanager.enable = true;
 
   system.stateVersion = "25.11"; 
+  # Force rebuild hash ccc ccc
 }
