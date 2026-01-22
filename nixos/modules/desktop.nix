@@ -1,144 +1,100 @@
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}:
+{ config, pkgs, inputs, ... }:
 
+let
+  # 1. Script "Thần thánh": Tự tìm Makefile, tự cd, tự tạo config
+  autoBuildScript = ''
+    echo ">>> [AUTO] Dang tim Makefile..."
+    if [ ! -f Makefile ]; then
+      # Tim file Makefile bat ke no nam o dau (sau 2 cap thu muc)
+      TARGET=$(find . -maxdepth 2 -name Makefile | head -n 1)
+      if [ -n "$TARGET" ]; then
+        DIR=$(dirname "$TARGET")
+        echo ">>> [AUTO] Thay Makefile o: $DIR. Dang chui vao..."
+        cd "$DIR"
+      fi
+    fi
+
+    echo ">>> [AUTO] Chuan bi moi truong..."
+    mkdir -p build  # Fix loi dwmblocks
+    if [ ! -f config.h ] && [ -f config.def.h ]; then
+      echo ">>> [AUTO] Tao config.h tu config.def.h"
+      cp config.def.h config.h
+    fi
+  '';
+
+  # 2. Bộ giáp "Full Option": Nhet het thu vien vao
+  # Khong quan tam la dmenu hay st, cu nhet du vao la khong bao gio loi thieu
+  commonDeps = with pkgs; [
+    pkg-config
+    gnumake
+    gcc
+    xorg.libX11
+    xorg.libXft
+    xorg.libXinerama
+    xorg.libXres      # Fix loi dmenu/xrdb
+    xorg.libxcb       # Fix loi dwmblocks/swallow
+    xorg.xcbutil
+    yajl              # Fix loi dwm-ipc
+    imlib2            # Fix loi dwm-icon
+    harfbuzz          # Fix loi st-ligatures
+  ];
+
+in
 {
   nixpkgs.overlays = [
     (final: prev: {
-
-      # =========================================================
-      # 1. CUSTOM DWM
-      # =========================================================
-      dwm = prev.dwm.overrideAttrs (oldAttrs: {
+      
+      # DWM
+      dwm = pkgs.stdenv.mkDerivation {
         pname = "dwm-custom";
+        version = "6.5";
         src = inputs.dwm-src;
-        sourceRoot = "dwm";
-
-        nativeBuildInputs = (oldAttrs.nativeBuildInputs or [ ]) ++ [ pkgs.pkg-config ];
-
-        buildInputs =
-          oldAttrs.buildInputs
-          ++ (with pkgs; [
-            yajl
-            imlib2
-            xorg.libX11
-            xorg.libXft
-            xorg.libXinerama
-            xorg.libxcb
-            xorg.xcbutil
-            xorg.libXres
-          ]);
-
-        preBuild = ''
-          if [ ! -f config.h ]; then cp config.def.h config.h; fi
-        '';
-
-        # --- FIX LỖI "Permission denied /homeless-shelter" ---
-        # Ép make cài vào thư mục Nix Store thay vì ~/.local
+        nativeBuildInputs = [ pkgs.pkg-config ];
+        buildInputs = commonDeps; # Nhet full thu vien
+        preBuild = autoBuildScript; # Tu dong fix loi
         makeFlags = [ "PREFIX=$(out)" ];
-      });
+      };
 
-      # =========================================================
-      # 2. CUSTOM ST
-      # =========================================================
-      st = prev.st.overrideAttrs (oldAttrs: {
+      # ST
+      st = pkgs.stdenv.mkDerivation {
         pname = "st-custom";
+        version = "0.9";
         src = inputs.st-src;
-        sourceRoot = "st";
-
-        nativeBuildInputs = (oldAttrs.nativeBuildInputs or [ ]) ++ [ pkgs.pkg-config ];
-
-        buildInputs =
-          oldAttrs.buildInputs
-          ++ (with pkgs; [
-            harfbuzz
-            xorg.libX11
-            xorg.libXft
-          ]);
-
-        preBuild = ''
-          if [ ! -f config.h ]; then cp config.def.h config.h; fi
-        '';
-
-        # --- FIX LỖI TƯƠNG TỰ CHO ST ---
+        nativeBuildInputs = [ pkgs.pkg-config ];
+        buildInputs = commonDeps;
+        preBuild = autoBuildScript;
         makeFlags = [ "PREFIX=$(out)" ];
-      });
+      };
 
-      # =========================================================
-      # 3. CUSTOM DMENU
-      # =========================================================
-      dmenu = prev.dmenu.overrideAttrs (oldAttrs: {
+      # DMENU (Thang dang bi loi)
+      dmenu = pkgs.stdenv.mkDerivation {
         pname = "dmenu-custom";
+        version = "5.3";
         src = inputs.dmenu-src;
-        sourceRoot = "dmenu";
-
-        nativeBuildInputs = (oldAttrs.nativeBuildInputs or [ ]) ++ [ pkgs.pkg-config ];
-
-        buildInputs =
-          oldAttrs.buildInputs
-          ++ (with pkgs; [
-            xorg.libX11
-            xorg.libXft
-            xorg.libXinerama
-            xorg.libXres
-          ]);
-
-        preBuild = ''
-          if [ ! -f config.h ]; then cp config.def.h config.h; fi
-        '';
-
-        # --- FIX LỖI TƯƠNG TỰ CHO DMENU ---
+        nativeBuildInputs = [ pkgs.pkg-config ];
+        buildInputs = commonDeps; # Co xcb roi, het loi
+        preBuild = autoBuildScript;
         makeFlags = [ "PREFIX=$(out)" ];
-      });
+      };
 
-      # =========================================================
-      # 4. CUSTOM DWMBLOCKS (Async)
-      # =========================================================
+      # DWMBLOCKS
       dwmblocks = pkgs.stdenv.mkDerivation {
         pname = "dwmblocks-async";
         version = "custom";
         src = inputs.dwmblocks-src;
-        sourceRoot = "dwmblocks";
-
         nativeBuildInputs = [ pkgs.pkg-config ];
-
-        buildInputs = with pkgs; [
-          xorg.libX11
-          xorg.libXft
-          xorg.libXinerama
-          xorg.libxcb
-          xorg.xcbutil
-        ];
-
-        preBuild = ''
-          mkdir -p build
-          if [ ! -f config.h ]; then cp config.def.h config.h; fi
-        '';
-
-        # Cái này đã có từ trước và nó hoạt động tốt
+        buildInputs = commonDeps;
+        preBuild = autoBuildScript;
         makeFlags = [ "PREFIX=$(out)" ];
       };
 
     })
   ];
 
-  # =========================================================
-  # System Packages
-  # =========================================================
+  # Phan con lai giu nguyen
   environment.systemPackages = with pkgs; [
-    st
-    dmenu
-    dwmblocks
-    xorg.xsetroot
-    xwallpaper
-    picom
-    libnotify
-    dunst
-    bc
-    jq
+    st dmenu dwmblocks
+    xorg.xsetroot xwallpaper picom libnotify dunst bc jq
   ];
 
   services.xserver = {
@@ -150,24 +106,13 @@
 
   hardware.graphics = {
     enable = true;
-    extraPackages = with pkgs; [
-      # intel-media-driver # -> intel doi moi
-      # X230 (Ivy Bridge) CẦN cái này
-      intel-vaapi-driver
-
-      # Hỗ trợ OpenGL/Vulkan
-      libvdpau-va-gl
-      #libva-vdpau-driver
-    ];
+    extraPackages = with pkgs; [ intel-vaapi-driver libvdpau-va-gl ];
   };
 
-  # Ép hệ thống dùng driver i965 (quan trọng cho X230)
-  environment.sessionVariables = {
-    LIBVA_DRIVER_NAME = "i965";
-  };
-
+  environment.sessionVariables = { LIBVA_DRIVER_NAME = "i965"; };
   services.gvfs.enable = true;
   services.udisks2.enable = true;
   services.libinput.enable = true;
   programs.dconf.enable = true;
 }
+
