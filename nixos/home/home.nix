@@ -11,18 +11,19 @@ let
   # Nhóm này chứa các ứng dụng chính bạn tương tác trực tiếp
   # =====================================================================
   userApps = with pkgs; [
-    # Web
+    # --- Web Browser ---
     # librewolf # (Đã có script wrapper riêng, có thể uncomment nếu muốn cài native)
-    # brave
-    # database management
+    # brave     # (Cài qua module programs.brave bên dưới sẽ tốt hơn)
+
+    # --- Database Management ---
     dbeaver-bin
 
-    # Media
-    nsxiv       # Ảnh
-    zathura     # PDF
-    mpv         # Video
-    calcurse    # Lịch
-    pavucontrol # Chỉnh âm thanh GUI
+    # --- Media ---
+    nsxiv       # Xem ảnh (Suckless style)
+    zathura     # Đọc PDF (Vim keybindings)
+    mpv         # Xem Video (Nhẹ, scriptable)
+    calcurse    # Lịch (TUI)
+    pavucontrol # Chỉnh âm thanh (GUI cho Pipewire)
   ];
 
   # =====================================================================
@@ -31,26 +32,29 @@ let
   # =====================================================================
   desktopUtilities = with pkgs; [
     # --- Core UI ---
-    rofi                    # Launcher
-    dunst                   # Notifications
-    trayer                  # System Tray
-    xwallpaper              # Wallpaper setter
-    arandr                  # Screen layout editor
-    networkmanagerapplet    # Wifi icon tray
+    rofi                    # App Launcher & Menu
+    dunst                   # Notification Daemon
+    trayer                  # System Tray (cho các app như nm-applet)
+    xwallpaper              # Wallpaper setter (nhẹ hơn feh)
+    arandr                  # GUI chỉnh màn hình (tạo script xrandr)
+    networkmanagerapplet    # Icon Wifi trên tray
 
-    # --- Scripting & Backend UI (Yad/Zenity...) ---
-    yad                     # Tạo GUI dialog cho script (Cần cho clipboard-tray)
+    # --- Scripting & Backend UI ---
+    yad                     # Tạo hộp thoại GUI cho script (quan trọng)
     libnotify               # Lệnh notify-send
 
     # --- Clipboard Manager ---
-    clipmenu                # Quản lý lịch sử copy (Gồm clipmenud & clipmenu)
+    clipmenu                # Quản lý lịch sử copy (dùng dmenu/rofi)
     xclip                   # Backend copy/paste cho X11
 
     # --- Screenshot & Automation ---
-    maim                    # Chụp ảnh màn hình
-    slop                    # Chọn vùng màn hình
-    xdotool                 # Giả lập thao tác phím/chuột
-    brightnessctl           # Chỉnh độ sáng
+    maim                    # Chụp ảnh màn hình (tốt hơn scrot)
+    slop                    # Chọn vùng màn hình (dùng với maim)
+    xdotool                 # Giả lập phím/chuột (cho script)
+    brightnessctl           # Chỉnh độ sáng màn hình
+    
+    # --- System Monitoring ---
+    pkgs.libva-utils        # Kiểm tra driver đồ họa (vainfo)
   ];
 
   # =====================================================================
@@ -58,64 +62,70 @@ let
   # Nhóm công cụ dòng lệnh, quản lý hệ thống, xử lý file
   # =====================================================================
   cliTools = with pkgs; [
-    # Core
+    # --- Core System ---
     neofetch
     htop
     btop
     trash-cli
     
-    # File Manager & Archives
-    lf
-    ueberzugpp
-    atool
+    # --- File Manager & Archives ---
+    lf              # File manager (Ranger like)
+    ueberzugpp      # Preview ảnh cho LF
+    atool           # Quản lý nén file đa năng
     unzip
     unrar
     
-    # Media processing
+    # --- Media Processing ---
     ffmpeg
     ffmpegthumbnailer
     imagemagick
-    poppler-utils # pdftoppm
+    poppler-utils   # pdftoppm (preview pdf)
     mediainfo
-    ghostscript   # PDF tools
+    ghostscript
 
-    # Network & Text processing
-    newsboat
-    neomutt
-    jq
-    socat
-    bc
+    # --- Network & Text Processing ---
+    newsboat        # RSS Reader
+    neomutt         # Email Client
+    jq              # Xử lý JSON
+    socat           # Socket cat
+    bc              # Máy tính
     file
     rsync
     
-    # Utils
-    util-linux    # setsid, etc.
+    # --- Utilities ---
+    util-linux      # setsid, v.v.
     sqlite
-    tectonic      # LaTeX
+    tectonic        # LaTeX engine hiện đại
   ];
 
   # =====================================================================
   # 4. AUDIO TOOLS (CLI)
   # =====================================================================
   audioTools = with pkgs; [
-    pulsemixer
-    pamixer
-    wireplumber
-    mpc
-    ncmpcpp
+    pulsemixer      # TUI Mixer (nhẹ)
+    pamixer         # CLI Volume control
+    wireplumber     # Quản lý session Pipewire
+    mpc             # Điều khiển MPD
+    ncmpcpp         # Giao diện nghe nhạc MPD
   ];
 
-  # 5.
+  # =====================================================================
+  # 5. DEVELOPMENT RUNTIMES
+  # Môi trường chạy ngôn ngữ lập trình
+  # =====================================================================
   devRuntimes = with pkgs; [
     nodejs_22
     python3
     go
     zig
-    gcc # Cần cho Treesitter / CGO
+    gcc             # Cần cho Treesitter / CGO
     gnumake
   ];
 
-  # 6. Neovim & Development Tools (Thay thế Mason)
+  # =====================================================================
+  # 6. NEOVIM & LSP (Thay thế Mason)
+  # Cài đặt LSP qua Nix để ổn định trên NixOS
+  # =====================================================================
   lspServers = with pkgs; [
     lua-language-server
     gopls
@@ -125,22 +135,27 @@ let
     pyright
     vscode-langservers-extracted # HTML/CSS/JSON
     bash-language-server
-    nil # Nix LSP
+    nil             # Nix LSP
   ];
 
-  # 7.
+  # =====================================================================
+  # 7. FORMATTERS & LINTERS
+  # =====================================================================
   formattersAndLinters = with pkgs; [
     stylua
-    gotools # goimports
+    gotools         # goimports
     nodePackages.prettier
     nodePackages.eslint_d
     shellcheck
     shfmt
-    ruff # Python linter
-    nixfmt-rfc-style # Nix formatter
+    ruff            # Python linter (nhanh)
+    nixfmt-rfc-style
   ];
 
-  # 8. 
+  # =====================================================================
+  # 8. NEOVIM ESSENTIALS
+  # Các công cụ bổ trợ cho Neovim (Telescope, Treesitter cần mấy cái này)
+  # =====================================================================
   neovimEssentials = with pkgs; [
     neovim
     lazygit
@@ -149,7 +164,7 @@ let
     eza
     bat
     fzf
-    tree-sitter # CLI
+    tree-sitter     # CLI
   ];
 
 in
@@ -157,58 +172,54 @@ in
   home.username = "ka";
   home.homeDirectory = "/home/ka";
 
-  # 2. Cài đặt Packages (Gộp các nhóm đã định nghĩa ở trên)
-  # ---------------------------------------------------------------------
+  # =====================================================================
+  # IMPORT MODULES
+  # Tách biệt cấu hình giao diện ra file riêng cho gọn
+  # =====================================================================
+  imports = [
+    ./theme.nix  # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
+  ];
+
+  # =====================================================================
+  # CÀI ĐẶT PACKAGES
+  # Kết hợp các nhóm đã định nghĩa ở trên
+  # =====================================================================
   home.packages =
     userApps
-    ++ desktopUtilities  # <-- Nhóm mới thêm vào đây
+    ++ desktopUtilities
     ++ cliTools
     ++ audioTools
     ++ devRuntimes
     ++ lspServers
     ++ formattersAndLinters
-    ++ pkgs.lib.optionals true neovimEssentials; # Ví dụ cách viết pro dùng optionals
+    ++ pkgs.lib.optionals true neovimEssentials;
 
-  # --- CẤU HÌNH BRAVE TỐI ƯU CHO THINKPAD X230 ---
+  # =====================================================================
+  # CẤU HÌNH BRAVE (TỐI ƯU CHO THINKPAD X230 / HD4000)
+  # =====================================================================
   programs.brave = {
     enable = true;
-
-    # Các tham số khởi động để ép Brave dùng GPU HD4000 hiệu quả
     commandLineArgs = [
-      # Bật giải mã video bằng phần cứng (VA-API)
-      "--enable-features=VaapiVideoDecodeLinuxGL"
+      "--enable-features=VaapiVideoDecodeLinuxGL" # VA-API Video Decode
       "--use-gl=egl"
-
-      # Bỏ qua danh sách đen GPU (vì HD4000 cũ hay bị Google chặn tính năng)
-      "--ignore-gpu-blocklist"
+      "--ignore-gpu-blocklist"                    # Ép chạy GPU cũ
       "--enable-gpu-rasterization"
       "--enable-zero-copy"
-
-      # Tiết kiệm RAM
-      "--process-per-site"
+      "--process-per-site"                        # Tiết kiệm RAM
     ];
-
-    # Tự động cài các Extension quan trọng
     extensions = [
-      # 1. uBlock Origin (Chặn quảng cáo -> Giảm tải CPU load trang web)
-      { id = "cjpalhdlnbpafiamejdnhcphjbkeiagm"; }
-
-      # 2. enhanced-h264ify (QUAN TRỌNG NHẤT CHO X230)
-      # Extension này ép YouTube phát chuẩn H.264 (HD4000 có hỗ trợ phần cứng)
-      # thay vì VP9 (HD4000 không hỗ trợ -> CPU phải gánh 100%)
-      { id = "omkfmpieigblcllmkgbflkikinpkodjg"; }
-
-      # 3. Vimium (Lướt web bằng bàn phím - Tùy chọn, hợp với DWM)
-      { id = "dbepggeogbaibhgnhhndojpepiihcmeb"; }
+      { id = "cjpalhdlnbpafiamejdnhcphjbkeiagm"; } # uBlock Origin
+      { id = "omkfmpieigblcllmkgbflkikinpkodjg"; } # enhanced-h264ify (QUAN TRỌNG)
+      { id = "dbepggeogbaibhgnhhndojpepiihcmeb"; } # Vimium
     ];
   };
 
-
-  # --- CẤU HÌNH BRAVE TỐI ƯU CHO THINKPAD X230 ---
-  # 3. Symlink Configuration (Clean Home Strategy)
-  # ---------------------------------------------------------------------
+  # =====================================================================
+  # SYMLINK CONFIGURATION (Clean Home Strategy)
+  # Liên kết trực tiếp từ Dotfiles Git Repo -> Home
+  # =====================================================================
   home.file = {
-    # Pointer cho Zsh (Triết lý: Không để file rác ở Home)
+    # Pointer cho Zsh (Giữ Home sạch sẽ)
     ".zshenv".text = ''
       export ZDOTDIR="$HOME/.config/zsh"
     '';
@@ -222,8 +233,7 @@ in
     ".config/lf".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/lf/.config/lf";
     ".config/rofi".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/rofi/.config/rofi";
     ".config/dunst".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/dunst/.config/dunst";
-    ".config/librewolf".source =
-      config.lib.file.mkOutOfStoreSymlink "${dotfiles}/librewolf/.config/librewolf";
+    ".config/librewolf".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/librewolf/.config/librewolf";
     ".config/tmux".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/tmux/.config/tmux";
 
     # -- Media --
@@ -231,30 +241,27 @@ in
     ".config/ncmpcpp".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/media/.config/ncmpcpp";
     ".config/mpv".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/media/.config/mpv";
     ".config/nsxiv".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/nsxiv/.config/nsxiv";
-    ".config/newsboat".source =
-      config.lib.file.mkOutOfStoreSymlink "${dotfiles}/bin/.local/share/newsboat"; # (Path hơi lạ, nhưng giữ nguyên ý bạn)
+    ".config/newsboat".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/bin/.local/share/newsboat";
 
     # -- X11 & Scripts --
     ".xinitrc".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/x11/.config/x11/xinitrc";
     ".xprofile".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/x11/.config/x11/xprofile";
     ".config/x11".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/x11/.config/x11";
 
-    # Scripts custom (Tách biệt để dễ quản lý trong PATH)
+    # -- Custom Scripts (Tách biệt) --
     ".local/bin/base".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/bin/.local/bin";
-    ".local/bin/user".source =
-      config.lib.file.mkOutOfStoreSymlink "${dotfiles}/user-bin/.local/bin/user";
+    ".local/bin/user".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/user-bin/.local/bin/user";
   };
 
-  # 4. Environment Variables & Path
-  # ---------------------------------------------------------------------
-
-  # Thêm đường dẫn vào PATH (Ưu tiên local bin tự compile > scripts > system)
+  # =====================================================================
+  # ENVIRONMENT VARIABLES & PATH
+  # =====================================================================
   home.sessionPath = [
-    "$HOME/.local/bin" # DWM, ST (Compiled manually)
-    "$HOME/.local/bin/base" # General Scripts
-    "$HOME/.local/bin/user" # User Scripts (ka-*)
-    "$HOME/go/bin" # Go Tools (Fallback nếu cài tay)
-    "$HOME/.cargo/bin" # Rust Tools (Fallback)
+    "$HOME/.local/bin"       # DWM, ST (Compiled)
+    "$HOME/.local/bin/base"  # Base Scripts
+    "$HOME/.local/bin/user"  # User Scripts
+    "$HOME/go/bin"           # Go Tools
+    "$HOME/.cargo/bin"       # Rust Tools
   ];
 
   home.sessionVariables = {
@@ -265,28 +272,7 @@ in
     _JAVA_AWT_WM_NONREPARENTING = "1";
   };
 
-  # 5. Theming (GTK & Icons)
-  # ---------------------------------------------------------------------
-  gtk = {
-    enable = true;
-    theme = {
-      name = "Arc-Dark";
-      package = pkgs.arc-theme;
-    };
-    iconTheme = {
-      name = "Papirus-Dark";
-      package = pkgs.papirus-icon-theme;
-    };
-    cursorTheme = {
-      name = "Adwaita";
-      package = pkgs.adwaita-icon-theme;
-    };
-    # Cấu hình Font cho GTK Apps
-    font = {
-      name = "Inter";
-      size = 11;
-    };
-  };
+  # (Đã xóa phần gtk = { ... } vì đã chuyển sang theme.nix)
 
   home.stateVersion = "25.11";
 }
