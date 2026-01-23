@@ -14,6 +14,8 @@ let
     # Web
     # librewolf # (Đã có script wrapper riêng, có thể uncomment nếu muốn cài native)
     # brave
+    # database management
+    dbeaver-bin
 
     # Media
     nsxiv       # Ảnh
