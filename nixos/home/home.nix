@@ -36,6 +36,7 @@ let
   # =====================================================================
   desktopUtilities = with pkgs; [
     # --- Core UI ---
+    picom                   # Compositor 
     rofi                    # App Launcher & Menu
     dunst                   # Notification Daemon
     trayer                  # System Tray (cho các app như nm-applet)
