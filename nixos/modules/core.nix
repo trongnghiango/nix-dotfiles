@@ -33,7 +33,7 @@
   # 4. Cấu hình Console TTY
   console = {
     enable = true;
-    font = "ter-v24n";
+    font = "ter-v24b";
     packages = with pkgs; [ terminus_font ];
     keyMap = "us";
   };
