@@ -124,10 +124,11 @@ in
     guiApps
     ++ systemTools
     ++ audioTools
-    # ++ devRuntimes
-    #++ lspServers
+    ++ devRuntimes
+    ++ lspServers
     ++ formattersAndLinters
     ++ neovimEssentials;
+
   # --- CẤU HÌNH BRAVE TỐI ƯU CHO THINKPAD X230 ---
   programs.brave = {
     enable = true;
