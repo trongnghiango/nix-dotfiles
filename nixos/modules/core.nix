@@ -30,6 +30,40 @@
     glib
   ];
 
+  # =====================================================================
+  # CẤU HÌNH FONT (Hệ thống cần cái này để hiển thị đúng)
+  # =====================================================================
+  # 1. CÀI GÓI FONT
+  fonts.packages = with pkgs; [
+    # Font chính cho Code/Terminal (Bao gồm Icon)
+    nerd-fonts.jetbrains-mono 
+
+    # Font cho DWM Status Bar ( tôi khuyên dùng Iosevka hoặc Blex)
+    nerd-fonts.iosevka 
+    nerd-fonts.blex-mono
+
+    # Font cho giao diện đẹp (UI)
+    inter
+    
+    # Font dự phòng cho tiếng Việt, Nhật, Hàn, Trung
+    noto-fonts
+    noto-fonts-cjk-sans
+    
+    # Font Emoji màu (Quan trọng để chat, web không bị lỗi ô vuông)
+    noto-fonts-color-emoji
+  ];
+
+  # 2. THIẾT LẬP MẶC ĐỊNH (QUAN TRỌNG ĐỂ ĐỒNG BỘ)
+  # Cái này giúp app nào không config font sẽ tự lấy đúng cái này
+  fonts.fontconfig = {
+    enable = true;
+    defaultFonts = {
+      monospace = [ "JetBrainsMono Nerd Font" "Noto Color Emoji" ];
+      serif = [ "Noto Serif" "Noto Color Emoji" ];
+      sansSerif = [ "Inter" "Noto Color Emoji" ];
+    };
+
+
   # --- SSH Security ---
   services.openssh = {
     enable = true;
