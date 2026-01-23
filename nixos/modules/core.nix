@@ -23,7 +23,11 @@
   fonts.packages = with pkgs; [
     # Font chính cho Code/Terminal (Bao gồm Icon)
     nerd-fonts.jetbrains-mono 
-    
+
+    # Font cho DWM Status Bar ( tôi khuyên dùng Iosevka hoặc Blex)
+    nerd-fonts.iosevka 
+    nerd-fonts.blex-mono
+
     # Font cho giao diện đẹp (UI)
     inter
     
