@@ -1,36 +1,75 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-# A dmenu wrapper script for system functions.
-export WM="dwm"
-case "$(readlink -f /sbin/init)" in
-	*systemd*) ctl='systemctl' ;;
-	*) ctl='loginctl' ;;
-esac
+# --- 1. CONFIG ---
+WM="dwm"
+STATUSBAR="dwmblocks"
 
-wmpid(){ # This function is needed if there are multiple instances of the window manager.
-	tree="$(pstree -ps $$)"
-	tree="${tree#*$WM(}"
-	echo "${tree%%)*}"
+# Hàm lấy PID của DWM an toàn trên NixOS
+get_wm_pid() {
+    # pgrep -x tìm chính xác tên process, an toàn hơn pstree
+    pgrep -x "$WM" | head -n 1
 }
 
-lock(){
-    mpc pause
-    pauseallmpv
-    wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
-    kill -44 $(pidof dwmblocks)
+# Hàm khóa máy & xử lý âm thanh
+lock() {
+    # Tạm dừng nhạc nếu có mpc/mpv
+    command -v mpc >/dev/null && mpc pause
+    command -v pauseallmpv >/dev/null && pauseallmpv
+
+    # Mute âm thanh (Dùng 1 để force mute, tránh toggle nhầm)
+    if command -v wpctl >/dev/null; then
+        wpctl set-mute @DEFAULT_AUDIO_SINK@ 1
+        # Gửi tín hiệu update icon volume (Signal 11 của bạn)
+        pkill -RTMIN+11 "$STATUSBAR"
+    fi
+
+    # Khóa màn hình (Chạy blocking)
     slock
-    wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
-    kill -44 $(pidof dwmblocks)
+
+    # Mở lại âm thanh sau khi unlock
+    if command -v wpctl >/dev/null; then
+        wpctl set-mute @DEFAULT_AUDIO_SINK@ 0
+        pkill -RTMIN+11 "$STATUSBAR"
+    fi
 }
 
-case "$(printf "🔒 lock\n🚪 leave $WM\n♻️ renew $WM\n🐻 hibernate\n🔃 reboot\n🖥️shutdown\n💤 sleep\n📺 display off" | dmenu -i -p 'Action: ')" in
-	'🔒 lock') lock ;;
-	"🚪 leave $WM") kill -TERM "$(wmpid)" ;;
-	"♻️ renew $WM") kill -HUP "$(wmpid)" ;;
-	'🐻 hibernate') slock $ctl hibernate -i ;;
-	'💤 sleep') slock $ctl suspend -i ;;
-	'🔃 reboot') $ctl reboot -i ;;
-	'🖥️shutdown') $ctl poweroff -i ;;
-	'📺 display off') xset dpms force off ;;
-	*) exit 1 ;;
+# --- 2. MENU DEFINITION ---
+# Dùng chuỗi đơn giản để tránh lỗi cú pháp
+# Format: "Icon Tên|Lệnh"
+options="🔒 Lock
+🚪 Leave $WM
+♻️ Renew $WM
+🐻 Hibernate
+💤 Sleep
+🔃 Reboot
+🛑 Shutdown
+📺 Display Off"
+
+# --- 3. HIỂN THỊ DMENU ---
+# -i: Case insensitive
+# -p: Prompt
+selected="$(echo -e "$options" | dmenu -i -p 'System:')"
+
+# --- 4. XỬ LÝ LỆNH ---
+case "$selected" in
+    *'Lock')
+        lock ;;
+    *'Leave'*)
+        # Gửi tín hiệu kết thúc cho DWM để thoát ra TTY/Login manager
+        kill -TERM "$(get_wm_pid)" ;;
+    *'Renew'*)
+        # Restart DWM tại chỗ (Cần patch restartsig)
+        kill -HUP "$(get_wm_pid)" ;;
+    *'Hibernate')
+        # Chạy lock trước rồi mới ngủ đông
+        slock & systemctl hibernate ;;
+    *'Sleep')
+        # Chạy lock trước rồi mới sleep
+        slock & systemctl suspend ;;
+    *'Reboot')
+        systemctl reboot ;;
+    *'Shutdown')
+        systemctl poweroff ;;
+    *'Display'*)
+        xset dpms force off ;;
 esac
