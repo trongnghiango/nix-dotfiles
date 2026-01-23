@@ -37,7 +37,7 @@ for program in $autostart; do
 done >/dev/null 2>&1
 
 # run script for statusbar
-start-dwmblocks &
+# start-dwmblocks &
 # run-blocks &
 
 # Ensure that xrdb has finished running before moving on to start the WM/DE.
