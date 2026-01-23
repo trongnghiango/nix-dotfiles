@@ -59,6 +59,14 @@ if ! pgrep -x "trayer" >/dev/null; then
     --transparent true --alpha 0 &
 fi
 
+# Compositor (Hiệu ứng trong suốt/mượt mà)
+# Kiểm tra nếu chưa chạy thì mới bật
+if ! pgrep -x "picom" >/dev/null; then
+  # Tham số -b để chạy ẩn (background)
+  # Tham số --experimental-backends giúp mượt hơn trên Intel HD4000
+  picom --experimental-backends -b &
+fi
+
 # ===============================================================
 # 4. KHỞI ĐỘNG DWM
 # ===============================================================
