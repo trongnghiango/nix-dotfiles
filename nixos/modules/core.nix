@@ -4,15 +4,15 @@
 { config, pkgs, ... }:
 
 {
+  # 1. Thời gian & Ngôn ngữ
   time.timeZone = "Asia/Ho_Chi_Minh";
   i18n.defaultLocale = "en_US.UTF-8";
 
+  # 2. Cấu hình Nix (Dọn rác & Tối ưu)
   nixpkgs.config.allowUnfree = true;
-
-  # --- PRO TIP: Tự động tối ưu và dọn rác ---
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
-    auto-optimise-store = true; # Tự động gộp file trùng nhau -> Tiết kiệm ổ cứng
+    auto-optimise-store = true;
   };
   nix.gc = {
     automatic = true;
@@ -20,7 +20,7 @@
     options = "--delete-older-than 7d";
   };
 
-  # --- Nix-ld: Để chạy binary tải ngoài (Mason, VSCode server...) ---
+  # 3. Hỗ trợ chạy Binary tải ngoài
   programs.nix-ld.enable = true;
   programs.nix-ld.libraries = with pkgs; [
     stdenv.cc.cc
@@ -30,47 +30,25 @@
     glib
   ];
 
-  # =====================================================================
-  # CẤU HÌNH CONSOLE (TTY)
-  # =====================================================================
+  # 4. Cấu hình Console TTY
   console = {
     enable = true;
-    
-    # Chọn font Terminus size 32 (cho màn hình to) hoặc 16 (cho màn laptop thường)
-    # Gợi ý: ter-v24n hoặc ter-v28n là cân đối nhất cho laptop hiện đại.
-    font = "ter-v24n"; 
-    
+    font = "ter-v24n";
     packages = with pkgs; [ terminus_font ];
-    
-    # Keymap (giữ nguyên us nếu bạn dùng bàn phím chuẩn)
     keyMap = "us";
   };
 
-  # =====================================================================
-  # CẤU HÌNH FONT (Hệ thống cần cái này để hiển thị đúng)
-  # =====================================================================
-  # 1. CÀI GÓI FONT
+  # 5. Cấu hình Fonts Hệ thống
   fonts.packages = with pkgs; [
-    # Font chính cho Code/Terminal (Bao gồm Icon)
-    nerd-fonts.jetbrains-mono 
-
-    # Font cho DWM Status Bar ( tôi khuyên dùng Iosevka hoặc Blex)
-    nerd-fonts.iosevka 
+    nerd-fonts.jetbrains-mono
     nerd-fonts.blex-mono
-
-    # Font cho giao diện đẹp (UI)
+    nerd-fonts.iosevka
     inter
-    
-    # Font dự phòng cho tiếng Việt, Nhật, Hàn, Trung
     noto-fonts
     noto-fonts-cjk-sans
-    
-    # Font Emoji màu (Quan trọng để chat, web không bị lỗi ô vuông)
     noto-fonts-color-emoji
   ];
 
-  # 2. THIẾT LẬP MẶC ĐỊNH (QUAN TRỌNG ĐỂ ĐỒNG BỘ)
-  # Cái này giúp app nào không config font sẽ tự lấy đúng cái này
   fonts.fontconfig = {
     enable = true;
     defaultFonts = {
@@ -78,25 +56,25 @@
       serif = [ "Noto Serif" "Noto Color Emoji" ];
       sansSerif = [ "Inter" "Noto Color Emoji" ];
     };
+  };
 
-
-  # --- SSH Security ---
+  # 6. SSH
   services.openssh = {
     enable = true;
     settings = {
       PasswordAuthentication = true;
-      PermitRootLogin = "no"; # Bảo mật: Không cho root login từ xa
+      PermitRootLogin = "no";
     };
   };
   networking.firewall.allowedTCPPorts = [ 22 ];
 
-  # --- SYSTEM PACKAGES (Chỉ giữ lại Core Tools) ---
-  # Xóa hết các lib X11/dev thừa, home.nix đã lo việc đó
+  # 7. Gói hệ thống cốt lõi
   environment.systemPackages = with pkgs; [
-    vim       # Editor dự phòng
+    vim
     git
     wget
     curl
-    htop      # Monitor dự phòng
+    htop
   ];
-};
+
+}
