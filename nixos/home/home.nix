@@ -1,3 +1,7 @@
+# ---
+# User (home.nix): Chứa toàn bộ ứng dụng người dùng, giao diện, dev tools.
+# ---
+
 {
   config,
   pkgs,
