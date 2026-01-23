@@ -1,20 +1,22 @@
 #!/bin/sh
 
-# 1. Load Biến môi trường (Environment Variables)
-[ -f "$XDG_CONFIG_HOME/shell/env" ] && . "$XDG_CONFIG_HOME/shell/env"
+# 1. Fallback config path (Để chạy được trên Arch/Void nếu chưa set ENV)
+: "${XDG_CONFIG_HOME:=$HOME/.config}"
 
-# 2. Load Aliases
-[ -f "$XDG_CONFIG_HOME/shell/aliasrc" ] && . "$XDG_CONFIG_HOME/shell/aliasrc"
+# 2. Load các file con (Gọn gàng)
+# 2.1 Load Biến môi trường (Environment Variables)
+[ -f "${XDG_CONFIG_HOME}/shell/env" ]     && . "${XDG_CONFIG_HOME}/shell/env"
+# 2.2 Load Aliases
+[ -f "${XDG_CONFIG_HOME}/shell/aliasrc" ] && . "${XDG_CONFIG_HOME}/shell/aliasrc"
+# 2.3. Load Functions
+[ -f "${XDG_CONFIG_HOME}/shell/funcrc" ]  && . "${XDG_CONFIG_HOME}/shell/funcrc"
 
-# 3. Load Functions
-[ -f "$XDG_CONFIG_HOME/shell/funcrc" ] && . "$XDG_CONFIG_HOME/shell/funcrc"
-
-# 4. Auto Startx (Chỉ chạy ở TTY1 và chưa có đồ họa)
-# Logic này hoạt động trên cả Arch, Void và NixOS
+# 3. Auto Startx (Logic tối ưu nhất)
+# - Chỉ chạy ở TTY1
+# - Chỉ chạy khi chưa có DISPLAY
+# - Kiểm tra Xorg bằng pgrep để an toàn với wrapper
 if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
-    # Kiểm tra xem Xorg đã chạy chưa để tránh loop
-    if ! pidof -s Xorg >/dev/null 2>&1; then     
-    # if ! pgrep -x "Xorg" >/dev/null; then
-        exec startx "$XINITRC"
+    if ! pgrep -x "Xorg" >/dev/null 2>&1; then
+        exec startx
     fi
 fi
