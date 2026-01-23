@@ -1,73 +1,58 @@
 #!/bin/sh
 
-# Use neovim for vim if present.
-[ -x "$(command -v nvim)" ] && alias vim="nvim" vimdiff="nvim -d"
+# --- Modern Tools Wrappers ---
 
-# Use $XINITRC variable if file exists.
-[ -f "$XINITRC" ] && alias startx='startx $XINITRC'
-
-[ -f "$MBSYNCRC" ] && alias mbsync='mbsync -c $MBSYNCRC'
-
-# sudo not required for some system commands
-for command in mount umount sv pacman updatedb su shutdown poweroff reboot; do
-  alias $command="sudo $command"
-done
-unset command
-
-se() {
-  choice="$(find ~/.local/bin -mindepth 1 -printf '%P\n' | fzf)"
-  [ -f "$HOME/.local/bin/$choice" ] && $EDITOR "$HOME/.local/bin/$choice"
-}
-
-# Verbosity and settings that you pretty much just always are going to want.
-alias \
-  cp="cp -iv" \
-  mv="mv -iv" \
-  rm="rm -vI" \
-  bc="bc -ql" \
-  rsync="rsync -vrPlu" \
-  mkd="mkdir -pv" \
-  yt="yt-dlp --embed-metadata -i" \
-  yta="yt -x -f bestaudio/best" \
-  ytt="yt --skip-download --write-thumbnail" \
-  ffmpeg="ffmpeg -hide_banner"
-
-# Colorize commands when possible.
-# Kiểm tra xem eza có được cài chưa
-if command -v eza >/dev/null; then
-  # Nếu có eza, dùng eza
-  alias ls="eza --icons --group-directories-first"
-  alias ll="eza -al --icons --group-directories-first"
-  alias la="eza -a --icons --group-directories-first"
-  alias lt="eza -aT --icons --group-directories-first"
+# ls -> eza
+if command -v eza >/dev/null 2>&1; then
+    alias ls='eza --icons --group-directories-first'
+    alias ll='eza -al --icons --group-directories-first'
+    alias lt='eza -aT --icons --group-directories-first' # Tree view
 else
-  # Nếu không, fallback về ls truyền thống
-  alias ls="ls -hN --color=auto --group-directories-first"
+    alias ls='ls --color=auto'
+    alias ll='ls -lah'
 fi
 
-#
-alias \
-  grep="grep --color=auto" \
-  diff="diff --color=auto" \
-  ccat="highlight --out-format=ansi" \
-  ip="ip -color=auto"
+# cat -> bat
+if command -v bat >/dev/null 2>&1; then
+    alias cat='bat --style=plain' # Xem nhanh
+    alias catt='bat'              # Xem có line number/header
+fi
 
-# These common commands are just too long! Abbreviate them.
-alias \
-  ka="killall" \
-  g="git" \
-  trem="transmission-remote" \
-  YT="youtube-viewer" \
-  sdn="shutdown -h now" \
-  e='$EDITOR' \
-  v='$EDITOR' \
-  p="pacman" \
-  xi="sudo xbps-install" \
-  xr="sudo xbps-remove -R" \
-  xq="xbps-query" \
-  z="zathura"
+# grep -> ripgrep
+if command -v rg >/dev/null 2>&1; then
+    alias grep='rg'
+else
+    alias grep='grep --color=auto'
+fi
 
-alias \
-  lf="lfub" \
-  magit="nvim -c MagitOnly" \
-  ref='shortcuts >/dev/null; source ${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc ; source ${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc ; source ${XDG_CONFIG_HOME:-$HOME/.config}/shell/zshnameddirrc'
+# cd -> zoxide (z)
+if command -v zoxide >/dev/null 2>&1; then
+    eval "$(zoxide init --cmd cd zsh)" # Hook thẳng vào lệnh cd
+fi
+
+# --- Common Shortcuts ---
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+alias cp='cp -iv'
+alias mv='mv -iv'
+alias rm='rm -iv'
+alias mkdir='mkdir -pv'
+
+# --- Dotfiles Management ---
+alias dots='cd $HOME/.dotfiles && nvim'
+alias nrebuild='sudo nixos-rebuild switch --flake $HOME/.dotfiles/nixos#thinkbox'
+alias nclean='nix-collect-garbage -d'
+
+# --- Git ---
+alias g='git'
+alias ga='git add'
+alias gc='git commit -m'
+alias gp='git push'
+alias gs='git status'
+alias gl='git log --oneline --graph --decorate'
+alias gd='git diff'
+
+# --- Networking ---
+alias myip='curl ifconfig.me'
