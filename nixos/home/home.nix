@@ -6,69 +6,104 @@
 }:
 
 let
-  # 1. Định nghĩa các nhóm gói phần mềm để dễ quản lý
-  # ---------------------------------------------------------------------
+  # =====================================================================
+  # 1. USER APPLICATIONS (End-user Software)
+  # Nhóm này chứa các ứng dụng chính bạn tương tác trực tiếp
+  # =====================================================================
+  userApps = with pkgs; [
+    # Web
+    # librewolf # (Đã có script wrapper riêng, có thể uncomment nếu muốn cài native)
+    # brave
 
-  guiApps = with pkgs; [
-    #librewolf
-    #brave
-    nsxiv
-    zathura
-    mpv
-    dunst
-    rofi
-    calcurse
-    pavucontrol
-    networkmanagerapplet
-    trayer
-    arandr
-    xwallpaper
-    pkgs.libva-utils # Cài thêm cái này để kiểm tra driver đồ họa (lệnh vainfo)
+    # Media
+    nsxiv       # Ảnh
+    zathura     # PDF
+    mpv         # Video
+    calcurse    # Lịch
+    pavucontrol # Chỉnh âm thanh GUI
   ];
 
-  systemTools = with pkgs; [
+  # =====================================================================
+  # 2. DESKTOP UTILITIES (The "Glue" of DWM)
+  # Nhóm này chứa các công cụ hỗ trợ giao diện, chạy nền, script backend
+  # =====================================================================
+  desktopUtilities = with pkgs; [
+    # --- Core UI ---
+    rofi                    # Launcher
+    dunst                   # Notifications
+    trayer                  # System Tray
+    xwallpaper              # Wallpaper setter
+    arandr                  # Screen layout editor
+    networkmanagerapplet    # Wifi icon tray
+
+    # --- Scripting & Backend UI (Yad/Zenity...) ---
+    yad                     # Tạo GUI dialog cho script (Cần cho clipboard-tray)
+    libnotify               # Lệnh notify-send
+
+    # --- Clipboard Manager ---
+    clipmenu                # Quản lý lịch sử copy (Gồm clipmenud & clipmenu)
+    xclip                   # Backend copy/paste cho X11
+
+    # --- Screenshot & Automation ---
+    maim                    # Chụp ảnh màn hình
+    slop                    # Chọn vùng màn hình
+    xdotool                 # Giả lập thao tác phím/chuột
+    brightnessctl           # Chỉnh độ sáng
+  ];
+
+  # =====================================================================
+  # 3. SYSTEM TOOLS (CLI / TUI)
+  # Nhóm công cụ dòng lệnh, quản lý hệ thống, xử lý file
+  # =====================================================================
+  cliTools = with pkgs; [
+    # Core
     neofetch
     htop
     btop
-    ncmpcpp
-    mpc
-    newsboat
-    neomutt
+    trash-cli
+    
+    # File Manager & Archives
     lf
-    ueberzugpp # Preview ảnh cho LF
+    ueberzugpp
+    atool
+    unzip
+    unrar
+    
+    # Media processing
     ffmpeg
     ffmpegthumbnailer
     imagemagick
     poppler-utils # pdftoppm
-    atool
-    unzip
-    unrar
-    xclip
-    maim
-    slop
-    brightnessctl
-    libnotify
+    mediainfo
+    ghostscript   # PDF tools
+
+    # Network & Text processing
+    newsboat
+    neomutt
     jq
     socat
     bc
-    mediainfo
-    dash
     file
-    xdotool
-    util-linux # setsid
-    trash-cli
-    sqlite # Snacks picker
-    ghostscript
-    tectonic # LaTeX
     rsync
+    
+    # Utils
+    util-linux    # setsid, etc.
+    sqlite
+    tectonic      # LaTeX
   ];
 
+  # =====================================================================
+  # 4. AUDIO TOOLS (CLI)
+  # =====================================================================
   audioTools = with pkgs; [
-    pulsemixer # TUI Mixer
-    pamixer # CLI Volume control
-    wireplumber # wpctl command
+    pulsemixer
+    pamixer
+    wireplumber
+    mpc
+    ncmpcpp
   ];
 
+  # 5.
   devRuntimes = with pkgs; [
     nodejs_22
     python3
@@ -78,7 +113,7 @@ let
     gnumake
   ];
 
-  # Neovim & Development Tools (Thay thế Mason)
+  # 6. Neovim & Development Tools (Thay thế Mason)
   lspServers = with pkgs; [
     lua-language-server
     gopls
@@ -91,6 +126,7 @@ let
     nil # Nix LSP
   ];
 
+  # 7.
   formattersAndLinters = with pkgs; [
     stylua
     gotools # goimports
@@ -102,6 +138,7 @@ let
     nixfmt-rfc-style # Nix formatter
   ];
 
+  # 8. 
   neovimEssentials = with pkgs; [
     neovim
     lazygit
@@ -121,13 +158,14 @@ in
   # 2. Cài đặt Packages (Gộp các nhóm đã định nghĩa ở trên)
   # ---------------------------------------------------------------------
   home.packages =
-    guiApps
-    ++ systemTools
+    userApps
+    ++ desktopUtilities  # <-- Nhóm mới thêm vào đây
+    ++ cliTools
     ++ audioTools
     ++ devRuntimes
     ++ lspServers
     ++ formattersAndLinters
-    ++ neovimEssentials;
+    ++ pkgs.lib.optionals true neovimEssentials; # Ví dụ cách viết pro dùng optionals
 
   # --- CẤU HÌNH BRAVE TỐI ƯU CHO THINKPAD X230 ---
   programs.brave = {
