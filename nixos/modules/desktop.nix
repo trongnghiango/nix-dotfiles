@@ -28,14 +28,12 @@ in
         pname = "dwm-custom"; version = "6.5"; src = inputs.dwm-src;
         nativeBuildInputs = [ pkgs.pkg-config pkgs.ncurses ];
         buildInputs = commonDeps;
-        
-        # FIX: Chui vao thu muc dwm truoc
+
+        # Ä Ãƒ Sá»¬A: XÃ³a 'cd dwm', chá»‰ cháº¡y copyConfig
         preBuild = ''
-          cd dwm
           ${copyConfig}
         '';
-        
-        # Fix: make install se cai vao $out
+
         makeFlags = [ "PREFIX=$(out)" ];
       };
 
@@ -44,14 +42,12 @@ in
         pname = "st-custom"; version = "0.9"; src = inputs.st-src;
         nativeBuildInputs = [ pkgs.pkg-config pkgs.ncurses ];
         buildInputs = commonDeps;
-        
-        # FIX: Chui vao thu muc st truoc
+
+        # Ä Ãƒ Sá»¬A: XÃ³a 'cd st'
         preBuild = ''
-          cd st
           ${copyConfig}
         '';
-        
-        # Fix: Tao thu muc terminfo va chi dinh install vao do
+
         preInstall = "mkdir -p $out/share/terminfo";
         makeFlags = [ "PREFIX=$(out)" "TERMINFO=$(out)/share/terminfo" ];
       };
@@ -61,13 +57,12 @@ in
         pname = "dmenu-custom"; version = "5.3"; src = inputs.dmenu-src;
         nativeBuildInputs = [ pkgs.pkg-config pkgs.ncurses ];
         buildInputs = commonDeps;
-        
-        # FIX: Chui vao thu muc dmenu truoc
+
+        # Ä Ãƒ Sá»¬A: XÃ³a 'cd dmenu'
         preBuild = ''
-          cd dmenu
           ${copyConfig}
         '';
-        
+
         makeFlags = [ "PREFIX=$(out)" ];
       };
 
@@ -75,13 +70,12 @@ in
       dwmblocks = pkgs.stdenv.mkDerivation {
         pname = "dwmblocks-async"; version = "custom"; src = inputs.dwmblocks-src;
         nativeBuildInputs = [ pkgs.pkg-config ]; buildInputs = commonDeps;
-        
-        # FIX: Chui vao thu muc dwmblocks truoc
+
+        # Ä Ãƒ Sá»¬A: XÃ³a 'cd dwmblocks'
         preBuild = ''
-          cd dwmblocks
           ${copyConfig}
         '';
-        
+
         makeFlags = [ "PREFIX=$(out)" ];
       };
 
