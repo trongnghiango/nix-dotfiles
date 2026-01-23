@@ -13,7 +13,8 @@
 # Logic này hoạt động trên cả Arch, Void và NixOS
 if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
     # Kiểm tra xem Xorg đã chạy chưa để tránh loop
-    if ! pgrep -x "Xorg" >/dev/null; then
-        exec startx
+    if ! pidof -s Xorg >/dev/null 2>&1; then     
+    # if ! pgrep -x "Xorg" >/dev/null; then
+        exec startx "$XINITRC"
     fi
 fi
