@@ -12,6 +12,9 @@
   environment.etc."zshenv".text = ''
     # Thiết lập biến môi trường cơ bản để tìm được file config
     export XDG_CONFIG_HOME="$HOME/.config"
+
+    #
+    export PATH="$HOME/.dotfiles/bin/.local/bin:$HOME/.dotfiles/user-bin/.local/bin:$HOME/.local/bin:$PATH"
     
     # Load Profile từ Dotfiles (Nơi chứa mọi logic: env, alias, startx)
     if [[ -f "$XDG_CONFIG_HOME/shell/profile" ]]; then
