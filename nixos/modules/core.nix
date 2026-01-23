@@ -99,4 +99,4 @@
     curl
     htop      # Monitor dự phòng
   ];
-}
+};
