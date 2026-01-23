@@ -8,84 +8,45 @@
   i18n.defaultLocale = "en_US.UTF-8";
 
   nixpkgs.config.allowUnfree = true;
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
 
-  # --- MỚI: nix-ld (Cứu cánh cho các binary tải ngoài Nix) ---
+  # --- PRO TIP: Tự động tối ưu và dọn rác ---
+  nix.settings = {
+    experimental-features = [ "nix-command" "flakes" ];
+    auto-optimise-store = true; # Tự động gộp file trùng nhau -> Tiết kiệm ổ cứng
+  };
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 7d";
+  };
+
+  # --- Nix-ld: Để chạy binary tải ngoài (Mason, VSCode server...) ---
   programs.nix-ld.enable = true;
   programs.nix-ld.libraries = with pkgs; [
     stdenv.cc.cc
     zlib
     openssl
     curl
+    glib
   ];
 
-  # 1. CÀI GÓI FONT
-  fonts.packages = with pkgs; [
-    # Font chính cho Code/Terminal (Bao gồm Icon)
-    nerd-fonts.jetbrains-mono 
-
-    # Font cho DWM Status Bar ( tôi khuyên dùng Iosevka hoặc Blex)
-    nerd-fonts.iosevka 
-    nerd-fonts.blex-mono
-
-    # Font cho giao diện đẹp (UI)
-    inter
-    
-    # Font dự phòng cho tiếng Việt, Nhật, Hàn, Trung
-    noto-fonts
-    noto-fonts-cjk-sans
-    
-    # Font Emoji màu (Quan trọng để chat, web không bị lỗi ô vuông)
-    noto-fonts-color-emoji
-  ];
-
-  # 2. THIẾT LẬP MẶC ĐỊNH (QUAN TRỌNG ĐỂ ĐỒNG BỘ)
-  # Cái này giúp app nào không config font sẽ tự lấy đúng cái này
-  fonts.fontconfig = {
-    enable = true;
-    defaultFonts = {
-      monospace = [ "JetBrainsMono Nerd Font" "Noto Color Emoji" ];
-      serif = [ "Noto Serif" "Noto Color Emoji" ];
-      sansSerif = [ "Inter" "Noto Color Emoji" ];
-    };
-  };
-
-  # SSH (Giữ nguyên của bạn)
+  # --- SSH Security ---
   services.openssh = {
     enable = true;
     settings = {
       PasswordAuthentication = true;
-      PermitRootLogin = "yes";
+      PermitRootLogin = "no"; # Bảo mật: Không cho root login từ xa
     };
   };
-
   networking.firewall.allowedTCPPorts = [ 22 ];
 
-  # Gói hệ thống cốt lõi (Giữ nguyên build tools cho DWM/ST)
+  # --- SYSTEM PACKAGES (Chỉ giữ lại Core Tools) ---
+  # Xóa hết các lib X11/dev thừa, home.nix đã lo việc đó
   environment.systemPackages = with pkgs; [
-    vim
+    vim       # Editor dự phòng
     git
     wget
     curl
-    gnumake
-    gcc
-    pkg-config
-    xorg.libX11
-    xorg.libX11.dev
-    xorg.libXinerama
-    xorg.libXinerama.dev
-    xorg.libXft
-    xorg.libXft.dev
-    xorg.xrandr
-    xorg.xsetroot
-    unzip
-    unrar
-    dash
-    tree
-    tmux
-    android-tools
+    htop      # Monitor dự phòng
   ];
 }
