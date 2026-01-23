@@ -94,4 +94,3 @@ in
   environment.sessionVariables = { LIBVA_DRIVER_NAME = "i965"; };
   services.gvfs.enable = true; services.udisks2.enable = true; services.libinput.enable = true; programs.dconf.enable = true;
 }
-
