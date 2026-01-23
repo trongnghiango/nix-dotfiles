@@ -27,7 +27,7 @@
     # Thêm đường dẫn Scripts vào PATH
     # (Đảm bảo scripts trong dotfiles chạy được mà không cần symlink)
     #export PATH="$HOME/.dotfiles/bin/.local/bin:$HOME/.local/bin:$PATH"
-    export PATH="$HOME/.dotfiles/bin/.local/bin:$HOME/.dotfiles/user-bin/.local/bin:$HOME/.local/bin:$PATH"
+    export PATH="$PATH:$HOME/.dotfiles/bin/.local/bin:$HOME/.dotfiles/user-bin/.local/bin:$HOME/.local/bin"
 
     # Load profile cũ nếu có
     if [[ -f "$XDG_CONFIG_HOME/shell/profile" ]]; then
