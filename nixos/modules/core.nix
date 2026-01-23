@@ -31,6 +31,22 @@
   ];
 
   # =====================================================================
+  # CẤU HÌNH CONSOLE (TTY)
+  # =====================================================================
+  console = {
+    enable = true;
+    
+    # Chọn font Terminus size 32 (cho màn hình to) hoặc 16 (cho màn laptop thường)
+    # Gợi ý: ter-v24n hoặc ter-v28n là cân đối nhất cho laptop hiện đại.
+    font = "ter-v24n"; 
+    
+    packages = with pkgs; [ terminus_font ];
+    
+    # Keymap (giữ nguyên us nếu bạn dùng bàn phím chuẩn)
+    keyMap = "us";
+  };
+
+  # =====================================================================
   # CẤU HÌNH FONT (Hệ thống cần cái này để hiển thị đúng)
   # =====================================================================
   # 1. CÀI GÓI FONT
