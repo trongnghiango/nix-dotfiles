@@ -14,8 +14,18 @@ elif [ -f "$HOME/.xprofile" ]; then
   . "$HOME/.xprofile"
 fi
 
+# 2. COMPOSITOR (Picom) - Chạy sớm để ổn định hình ảnh
+# Dùng --experimental-backends nếu máy Intel HD4000 để mượt hơn
+if ! pgrep -x "picom" >/dev/null; then
+  picom --experimental-backends -b &
+fi
+
+# 3. HÌNH NỀN (Wallpaper)
+# Set hình nền xong mới vẽ bar thì đẹp hơn
+setbg "$HOME/Pictures/Wallpapers/" &
+
 # ===============================================================
-# 2. XỬ LÝ AUDIO
+# 4. XỬ LÝ AUDIO
 # ===============================================================
 
 start_audio_manual() {
@@ -40,7 +50,7 @@ else
 fi
 
 # ===============================================================
-# 3. ỨNG DỤNG NỀN (STARTUP APPS)
+# 5. ỨNG DỤNG NỀN (STARTUP APPS)
 # ===============================================================
 
 # --- KHỞI ĐỘNG DWMBLOCKS (ĐÂY LÀ PHẦN BẠN THIẾU) ---
@@ -59,16 +69,9 @@ if ! pgrep -x "trayer" >/dev/null; then
     --transparent true --alpha 0 &
 fi
 
-# Compositor (Hiệu ứng trong suốt/mượt mà)
-# Kiểm tra nếu chưa chạy thì mới bật
-if ! pgrep -x "picom" >/dev/null; then
-  # Tham số -b để chạy ẩn (background)
-  # Tham số --experimental-backends giúp mượt hơn trên Intel HD4000
-  picom --experimental-backends -b &
-fi
 
 # ===============================================================
-# 4. KHỞI ĐỘNG DWM
+# 6. KHỞI ĐỘNG DWM
 # ===============================================================
 
 # QUAN TRỌNG: Hãy dùng 'exec ssh-agent dwm' thay vì trỏ cứng vào .local/bin
