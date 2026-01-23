@@ -6,44 +6,26 @@
     enableCompletion = true;
     autosuggestions.enable = true;
     syntaxHighlighting.enable = true;
-    
-    enableGlobalCompInit = false;
-    promptInit = "";
   };
 
-  # -------------------------------------------------------------
-  # Cấu hình biến môi trường qua /etc/zshenv (System Level)
-  # -------------------------------------------------------------
   environment.etc."zshenv".text = ''
     export XDG_CONFIG_HOME="$HOME/.config"
     export XDG_CACHE_HOME="$HOME/.cache"
     export XDG_DATA_HOME="$HOME/.local/share"
 
-    # Trỏ config Zsh
     if [[ -d "$XDG_CONFIG_HOME/zsh" ]]; then
       export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
     fi
 
-    # Thêm đường dẫn Scripts vào PATH
-    # (Đảm bảo scripts trong dotfiles chạy được mà không cần symlink)
-    #export PATH="$HOME/.dotfiles/bin/.local/bin:$HOME/.local/bin:$PATH"
+    # CLEAN CODE: Đặt PATH hệ thống lên trước để tránh xung đột binary cũ
     export PATH="$PATH:$HOME/.dotfiles/bin/.local/bin:$HOME/.dotfiles/user-bin/.local/bin:$HOME/.local/bin"
-
-    # Load profile cũ nếu có
-    if [[ -f "$XDG_CONFIG_HOME/shell/profile" ]]; then
-      source "$XDG_CONFIG_HOME/shell/profile"
-    fi
   '';
 
+  # Các tool CLI hiện đại (cài cho toàn hệ thống để user nào cũng dùng được)
   environment.systemPackages = with pkgs; [
-    fzf
-    eza
-    bat
-    zoxide
-    fnm
+    fzf eza bat zoxide fnm
   ];
 
   environment.shells = with pkgs; [ zsh ];
   users.defaultUserShell = pkgs.zsh;
 }
-
