@@ -1,17 +1,15 @@
 { config, pkgs, inputs, ... }:
 
 let
-  # Script copy config don gian (dung chung)
+  # Script copy config đơn giản
   copyConfig = ''
-    echo ">>> Dang o thu muc: $(pwd)"
-    ls -la
     if [ ! -f config.h ] && [ -f config.def.h ]; then
-      echo ">>> Copy config.def.h -> config.h"
       cp config.def.h config.h
     fi
   '';
 
-  commonDeps = with pkgs; [
+  # Dependencies để build Suckless tools
+  sucklessDeps = with pkgs; [
     pkg-config gnumake gcc
     xorg.libX11 xorg.libXft xorg.libXinerama
     xorg.libXres xorg.libxcb xorg.xcbutil
@@ -20,71 +18,67 @@ let
   ];
 in
 {
+  # --- Overlay: Build DWM/ST từ source ---
   nixpkgs.overlays = [
     (final: prev: {
-
-      # --- DWM ---
       dwm = pkgs.stdenv.mkDerivation {
         pname = "dwm-custom"; version = "6.5"; src = inputs.dwm-src;
         nativeBuildInputs = [ pkgs.pkg-config pkgs.ncurses ];
-        buildInputs = commonDeps;
-
-        # Ä Ãƒ Sá»¬A: XÃ³a 'cd dwm', chá»‰ cháº¡y copyConfig
-        preBuild = ''
-          ${copyConfig}
-        '';
-
+        buildInputs = sucklessDeps;
+        preBuild = copyConfig;
         makeFlags = [ "PREFIX=$(out)" ];
       };
 
-      # --- ST ---
       st = pkgs.stdenv.mkDerivation {
         pname = "st-custom"; version = "0.9"; src = inputs.st-src;
         nativeBuildInputs = [ pkgs.pkg-config pkgs.ncurses ];
-        buildInputs = commonDeps;
-
-        # Ä Ãƒ Sá»¬A: XÃ³a 'cd st'
-        preBuild = ''
-          ${copyConfig}
-        '';
-
+        buildInputs = sucklessDeps;
+        preBuild = copyConfig;
         preInstall = "mkdir -p $out/share/terminfo";
         makeFlags = [ "PREFIX=$(out)" "TERMINFO=$(out)/share/terminfo" ];
       };
 
-      # --- DMENU ---
       dmenu = pkgs.stdenv.mkDerivation {
         pname = "dmenu-custom"; version = "5.3"; src = inputs.dmenu-src;
         nativeBuildInputs = [ pkgs.pkg-config pkgs.ncurses ];
-        buildInputs = commonDeps;
-
-        # Ä Ãƒ Sá»¬A: XÃ³a 'cd dmenu'
-        preBuild = ''
-          ${copyConfig}
-        '';
-
+        buildInputs = sucklessDeps;
+        preBuild = copyConfig;
         makeFlags = [ "PREFIX=$(out)" ];
       };
 
-      # --- DWMBLOCKS ---
       dwmblocks = pkgs.stdenv.mkDerivation {
         pname = "dwmblocks-async"; version = "custom"; src = inputs.dwmblocks-src;
-        nativeBuildInputs = [ pkgs.pkg-config ]; buildInputs = commonDeps;
-
-        # Ä Ãƒ Sá»¬A: XÃ³a 'cd dwmblocks'
-        preBuild = ''
-          ${copyConfig}
-        '';
-
+        nativeBuildInputs = [ pkgs.pkg-config ]; buildInputs = sucklessDeps;
+        preBuild = copyConfig;
         makeFlags = [ "PREFIX=$(out)" ];
       };
-
     })
   ];
 
-  environment.systemPackages = with pkgs; [ st dmenu dwmblocks xorg.xsetroot xwallpaper picom libnotify dunst bc jq ];
-  services.xserver = { enable = true; xkb.layout = "us"; displayManager.startx.enable = true; windowManager.dwm.enable = true; };
-  hardware.graphics = { enable = true; extraPackages = with pkgs; [ intel-vaapi-driver libvdpau-va-gl ]; };
+  # Chỉ cài đúng 4 món này vào hệ thống
+  environment.systemPackages = with pkgs; [ dwm st dmenu dwmblocks ];
+
+  # --- X11 Configuration ---
+  services.xserver = {
+    enable = true;
+    xkb.layout = "us";
+    
+    # Tắt display manager (login bằng startx hoặc console) cho nhẹ
+    displayManager.startx.enable = true;
+    
+    windowManager.dwm.enable = true;
+  };
+
+  # --- Graphics & Drivers ---
+  hardware.graphics = {
+    enable = true;
+    extraPackages = with pkgs; [ intel-vaapi-driver libvdpau-va-gl ];
+  };
   environment.sessionVariables = { LIBVA_DRIVER_NAME = "i965"; };
-  services.gvfs.enable = true; services.udisks2.enable = true; services.libinput.enable = true; programs.dconf.enable = true;
+
+  # --- System Services ---
+  services.gvfs.enable = true;    # Mount ổ đĩa, USB
+  services.udisks2.enable = true; # Quản lý ổ đĩa
+  services.libinput.enable = true; # Touchpad
+  programs.dconf.enable = true;   # Cần cho GTK apps
 }
