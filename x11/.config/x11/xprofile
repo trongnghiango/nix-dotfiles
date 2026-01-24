@@ -31,7 +31,8 @@ export SDL_IM_MODULE=fcitx
 export INPUT_METHOD=fcitx
 
 # Khởi động Daemon (nếu chưa chạy)
-pgrep -x fcitx5 || fcitx5 -d &
+#pgrep -x fcitx5 || fcitx5 -d &
+pgrep -x picom || picom --backend glx -b &
 
 # ===============================================================
 # 4. HÌNH ẢNH & HIỆU ỨNG (VISUALS)
