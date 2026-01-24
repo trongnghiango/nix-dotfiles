@@ -117,7 +117,7 @@ in
   # 1. PACKAGE INSTALLATION
   # =====================================================================
   home.packages = coreUtils ++ desktopUtils ++ userApps ++ devTools ++ [
-    pkgs.fcitx5-configtool
+    qt6Packages.fcitx5-configtool
   ];
 
   # =====================================================================
