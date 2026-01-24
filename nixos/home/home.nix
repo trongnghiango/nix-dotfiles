@@ -46,7 +46,6 @@ let
     
     # Status Bar & Tray
     # dwmblocks (Đã cài ở system level hoặc compile tay)
-    trayer-srg      # System tray (Bản fork tốt hơn trayer gốc)
     networkmanagerapplet
     
     # Screenshot & Clipboard
