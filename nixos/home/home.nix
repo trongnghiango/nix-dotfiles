@@ -66,6 +66,7 @@ let
     fcitx5-gtk
     fcitx5-bamboo
     # fcitx5-unikey
+    libsForQt5.fcitx5-config-qt 
   ];
 
   # =====================================================================
