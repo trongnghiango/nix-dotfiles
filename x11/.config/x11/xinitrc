@@ -1,79 +1,23 @@
 #!/bin/sh
 
-# ===============================================================
-# 1. KHỞI TẠO MÔI TRƯỜNG & DBUS
-# ===============================================================
+# 1. Load Environment (PATH, EDITOR...)
+# Tách biệt file profile để dùng chung cho cả Zsh và Bash
+[ -f "$HOME/.config/shell/profile" ] && . "$HOME/.config/shell/profile"
 
-if command -v dbus-update-activation-environment >/dev/null 2>&1; then
-  dbus-update-activation-environment --systemd --all
-fi
+# 2. Load Resources (Màu sắc giao diện cho ST/DWM)
+[ -f "$HOME/.config/x11/xresources" ] && xrdb -merge "$HOME/.config/x11/xresources"
 
-if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/x11/xprofile" ]; then
-  . "${XDG_CONFIG_HOME:-$HOME/.config}/x11/xprofile"
-elif [ -f "$HOME/.xprofile" ]; then
-  . "$HOME/.xprofile"
-fi
+# 3. Gọi Hậu cần (.xprofile)
+[ -f "$HOME/.config/x11/xprofile" ] && . "$HOME/.config/x11/xprofile"
 
-# 2. COMPOSITOR (Picom) - Chạy sớm để ổn định hình ảnh
-# Dùng --experimental-backends nếu máy Intel HD4000 để mượt hơn
-if ! pgrep -x "picom" >/dev/null; then
-  picom --experimental-backends -b &
-fi
+# 4. EXEC: Khởi động Window Manager (DWM)
+# - ssh-agent: Giữ key SSH trong suốt phiên làm việc.
+# - dbus-launch: Khởi tạo message bus cho session.
+# - --exit-with-session: Kill dbus khi thoát DWM.
 
-# 3. HÌNH NỀN (Wallpaper)
-# Set hình nền xong mới vẽ bar thì đẹp hơn
-setbg "$HOME/Pictures/Wallpapers/" &
-
-# ===============================================================
-# 4. XỬ LÝ AUDIO
-# ===============================================================
-
-start_audio_manual() {
-  killall -9 pipewire wireplumber pipewire-pulse 2>/dev/null
-  sleep 0.5
-  if command -v pipewire >/dev/null; then
-    pipewire &
-    command -v wireplumber >/dev/null && wireplumber &
-    command -v pipewire-pulse >/dev/null && pipewire-pulse &
-  fi
-}
-
-start_audio_systemd() {
-  systemctl --user reset-failed pipewire wireplumber pipewire-pulse 2>/dev/null
-  systemctl --user restart pipewire wireplumber pipewire-pulse
-}
-
-if [ -f /etc/nixos/configuration.nix ]; then
-  (sleep 1 && start_audio_systemd && sleep 2 && pkill -RTMIN+11 dwmblocks) &
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
+    exec ssh-agent dbus-launch --exit-with-session dwm
 else
-  (start_audio_manual && sleep 2 && pkill -RTMIN+11 dwmblocks) &
+    # Fallback cho trường hợp systemd đã load dbus (thường gặp trên NixOS Graphical)
+    exec ssh-agent dwm
 fi
-
-# ===============================================================
-# 5. ỨNG DỤNG NỀN (STARTUP APPS)
-# ===============================================================
-
-# --- KHỞI ĐỘNG DWMBLOCKS (ĐÂY LÀ PHẦN BẠN THIẾU) ---
-# Dùng script start-dwmblocks của bạn để nó tự kill process cũ
-if command -v start-dwmblocks >/dev/null 2>&1; then
-    start-dwmblocks &
-else
-    # Fallback nếu không tìm thấy script
-    dwmblocks &
-fi
-
-# Trayer
-if ! pgrep -x "trayer" >/dev/null; then
-  trayer --edge top --align left --widthtype request --padding 0 \
-    --SetDockType true --tint 0x222222 --height 24 \
-    --transparent true --alpha 0 &
-fi
-
-
-# ===============================================================
-# 6. KHỞI ĐỘNG DWM
-# ===============================================================
-
-# QUAN TRỌNG: Hãy dùng 'exec ssh-agent dwm' thay vì trỏ cứng vào .local/bin
-# để đảm bảo nó dùng đúng bản dwm xịn do NixOS build.
-exec ssh-agent dwm
