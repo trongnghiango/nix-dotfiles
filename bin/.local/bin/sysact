@@ -56,7 +56,8 @@ case "$selected" in
         lock ;;
     *'Leave'*)
         # Gửi tín hiệu kết thúc cho DWM để thoát ra TTY/Login manager
-        kill -TERM "$(get_wm_pid)" ;;
+        #kill -TERM "$(get_wm_pid)" ;;
+        ka-exit ;;
     *'Renew'*)
         # Restart DWM tại chỗ (Cần patch restartsig)
         kill -HUP "$(get_wm_pid)" ;;
