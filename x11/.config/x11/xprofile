@@ -40,7 +40,9 @@ pgrep -x picom || picom --backend glx -b &
 
 # Compositor (Picom): Chạy background (-b).
 # Thêm --experimental-backends nếu dùng Intel GPU cũ (HD4000) để mượt hơn
-pgrep -x picom || picom -b &
+# Dùng xrender: Cực ổn định cho máy cũ, không bị crash driver Intel
+# --no-fading-openclose: Tắt hiệu ứng fade đóng mở để đỡ lag
+pgrep -x picom || picom --backend xrender --no-fading-openclose -b &
 
 # Hình nền: Dùng script setbg của bạn (trong scripts/.local/bin)
 # Nếu không có setbg thì fallback về xwallpaper/feh
