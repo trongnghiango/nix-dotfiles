@@ -119,7 +119,7 @@ in
   # =====================================================================
   home.packages = coreUtils ++ desktopUtils ++ userApps ++ devTools ++ [
     pkgs.fcitx5-configtool
-  ];;
+  ];
 
   # =====================================================================
   # 2. INPUT METHOD (BỘ GÕ TIẾNG VIỆT) - CLEAN WAY
