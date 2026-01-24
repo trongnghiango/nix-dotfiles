@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 url="${WTTRURL:-wttr.in}"
 weatherreport="$HOME/.cache/weatherreport"
@@ -8,7 +8,7 @@ LOCATION="Govap"
 touch ~/.cache/weatherreport
 
 # Get a weather report from 'wttr.in' and save it locally.
-getforecast() { timeout --signal=1 10s curl -sf "$url/$LOCATION" > "$weatherreport" || exit 1; }
+getforecast() { timeout --signal=1 10s curl -sf "$url/$LOCATION" >"$weatherreport" || exit 1; }
 
 lat="10.847"
 lon="106.670"
@@ -22,43 +22,43 @@ condition="$(echo "$weather_data" | jq -r '.weather[0].description' | sed -e "s/
 
 temprature=$(echo "$weather_data" | jq -r '.main.temp' | cut -c-2)
 
-icon=$(echo "$weather_data" | jq -r '.weather[0].icon'  | tr -d 'nd')
+icon=$(echo "$weather_data" | jq -r '.weather[0].icon' | tr -d 'nd')
 
 # conditon emoji
 if [[ $icon == 01 ]]; then
-	emoji_con=""
+  emoji_con=""
 elif [[ $icon == 02 ]]; then
-	emoji_con="⛅"
+  emoji_con="⛅"
 elif [[ $icon == 03 ]]; then
-	emoji_con="🌫️"
+  emoji_con="🌫️"
 elif [[ $icon == 04 ]]; then
-	emoji_con="☁️"
+  emoji_con="☁️"
 elif [[ $icon == 09 ]]; then
-	emoji_con="🌧️"
+  emoji_con="🌧️"
 elif [[ $icon == 10 ]]; then
-	emoji_con="🌦️"
+  emoji_con="🌦️"
 elif [[ $icon == 11 ]]; then
-	emoji_con="🌩️"
+  emoji_con="🌩️"
 elif [[ $icon == 13 ]]; then
-	emoji_con="❄️"
+  emoji_con="❄️"
 elif [[ $icon == 50 ]]; then
-	emoji_con="💨"
+  emoji_con="💨"
 else
-	emoji_con="🍃"
+  emoji_con="🍃"
 fi
 
 # temprature emoji
 if [[ $temprature -le 20 ]]; then
-	emoji_temp="🥶"
+  emoji_temp="🥶"
 elif [[ $temprature -ge 38 ]]; then
-	emoji_temp="🥵"
+  emoji_temp="🥵"
 else
-	emoji_temp="🌞"
+  emoji_temp="🌞"
 fi
 
 case $BUTTON in
-	1) getforecast && $TERMINAL -e less -Sf /$HOME/.cache/weatherreport ;;
-	3) notify-send "🌈 Weather module" "\- Middle click to update forecast." ;;
+1) getforecast && $TERMINAL -e less -Sf /$HOME/.cache/weatherreport ;;
+3) notify-send "🌈 Weather module" "\- Middle click to update forecast." ;;
 esac
 
 # print temp line
