@@ -65,8 +65,9 @@ let
     fcitx5
     fcitx5-gtk
     fcitx5-bamboo
-    # fcitx5-unikey
-    qt6Packages.fcitx5-configtool
+    fcitx5-unikey
+    kdePackages.fcitx5-config-qt
+    #qt6Packages.fcitx5-configtool
   ];
 
   # =====================================================================
