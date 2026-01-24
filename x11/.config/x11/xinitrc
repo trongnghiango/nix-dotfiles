@@ -1,23 +1,32 @@
 #!/bin/sh
 
-# 1. Load Environment (PATH, EDITOR...)
-# Tách biệt file profile để dùng chung cho cả Zsh và Bash
+# Ghi log lỗi ra file để đọc
+exec > ~/.xinitrc-errors.log 2>&1
+
+echo "Start xinitrc..."
+
+# 1. Load Profile
 [ -f "$HOME/.config/shell/profile" ] && . "$HOME/.config/shell/profile"
 
-# 2. Load Resources (Màu sắc giao diện cho ST/DWM)
-[ -f "$HOME/.config/x11/xresources" ] && xrdb -merge "$HOME/.config/x11/xresources"
-
-# 3. Gọi Hậu cần (.xprofile)
+# 2. Load Xprofile
 [ -f "$HOME/.config/x11/xprofile" ] && . "$HOME/.config/x11/xprofile"
 
-# 4. EXEC: Khởi động Window Manager (DWM)
-# - ssh-agent: Giữ key SSH trong suốt phiên làm việc.
-# - dbus-launch: Khởi tạo message bus cho session.
-# - --exit-with-session: Kill dbus khi thoát DWM.
+echo "Loaded profile. Starting DWM..."
 
-if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
+# 3. START DWM (An toàn hơn)
+# Kiểm tra xem dwm có tồn tại không
+if ! command -v dwm >/dev/null; then
+    echo "ERROR: DWM not found in PATH!"
+    # Fallback để không bị crash: mở xterm giữ nhịp
+    exec xterm
+fi
+
+# Thử chạy đơn giản trước (Bỏ dbus/ssh-agent tạm thời để test)
+# exec dwm
+
+# Nếu muốn test full dòng lệnh pro:
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && command -v dbus-launch >/dev/null; then
     exec ssh-agent dbus-launch --exit-with-session dwm
 else
-    # Fallback cho trường hợp systemd đã load dbus (thường gặp trên NixOS Graphical)
     exec ssh-agent dwm
 fi
