@@ -39,7 +39,7 @@ pgrep -x fcitx5 || fcitx5 -d &
 
 # Compositor (Picom): Chạy background (-b).
 # Thêm --experimental-backends nếu dùng Intel GPU cũ (HD4000) để mượt hơn
-pgrep -x picom || picom --experimental-backends -b &
+pgrep -x picom || picom -b &
 
 # Hình nền: Dùng script setbg của bạn (trong scripts/.local/bin)
 # Nếu không có setbg thì fallback về xwallpaper/feh
