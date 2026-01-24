@@ -1,36 +1,43 @@
 { config, pkgs, ... }:
 
 {
-  programs.zsh = {
-    enable = true;
-    enableCompletion = true;
-    autosuggestions.enable = true;
-    syntaxHighlighting.enable = true;
-  };
+  # ====================================================================
+  # 1. KÍCH HOẠT ZSH (SYSTEM LEVEL)
+  # ====================================================================
+  # Bắt buộc phải có để NixOS thêm zsh vào /etc/shells
+  programs.zsh.enable = true;
 
-  # Chỉ cần trỏ đúng 1 file profile là xong!
-  environment.etc."zshenv".text = ''
-    # Thiết lập biến môi trường cơ bản để tìm được file config
-    export XDG_CONFIG_HOME="$HOME/.config"
+  # Lưu ý: KHÔNG bật autosuggestions, syntaxHighlighting ở đây nữa.
+  # Để Home Manager quản lý việc đó cho từng user.
+  # Điều này giúp root user (khi sudo -i) sạch sẽ, không bị lỗi config của user thường.
 
-    #
-    #export PATH="$HOME/.dotfiles/bin/.local/bin:$HOME/.dotfiles/user-bin/.local/bin:$HOME/.local/bin:$PATH"
-    
-    # Load Profile từ Dotfiles (Nơi chứa mọi logic: env, alias, startx)
-    if [[ -f "$XDG_CONFIG_HOME/shell/profile" ]]; then
-      source "$XDG_CONFIG_HOME/shell/profile"
-    fi
-    
-    # Zsh Config location
-    if [[ -d "$XDG_CONFIG_HOME/zsh" ]]; then
-      export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
-    fi
-  '';
+  # ====================================================================
+  # 2. THIẾT LẬP MẶC ĐỊNH
+  # ====================================================================
+  users.defaultUserShell = pkgs.zsh;
 
+  # ====================================================================
+  # 3. GÓI HỆ THỐNG CỐT LÕI (SYSTEM PACKAGES)
+  # ====================================================================
+  # Chỉ cài những thứ thực sự cần cho Root hoặc Cứu hộ hệ thống.
+  # (User 'ka' đã có đủ đồ chơi trong home.nix rồi)
   environment.systemPackages = with pkgs; [
-    fzf eza bat zoxide fnm
+    vim       # Editor dự phòng (nếu nvim lỗi)
+    git       # Để clone cấu hình
+    curl
+    wget
+    psmisc    # Chứa lệnh killall
   ];
 
-  environment.shells = with pkgs; [ zsh ];
-  users.defaultUserShell = pkgs.zsh;
+  # ====================================================================
+  # 4. BIẾN MÔI TRƯỜNG TOÀN CỤC
+  # ====================================================================
+  environment.variables = {
+    EDITOR = "nvim";
+    VISUAL = "nvim";
+  };
+  
+  # XÓA: environment.etc."zshenv".text
+  # Lý do: Đã chuyển sang programs.zsh.envExtra trong home.nix
+  # Việc ghi đè /etc/zshenv là không cần thiết và gây khó debug.
 }
