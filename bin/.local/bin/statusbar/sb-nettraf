@@ -22,7 +22,9 @@ update() {
     printf %d\\n "$sum" >"$cache"
     printf %d\\n $((sum - old))
 }
-
+# Thêm check rỗng
+rx=${rx:-0}
+tx=${tx:-0}
 rx=$(update /sys/class/net/[ew]*/statistics/rx_bytes)
 tx=$(update /sys/class/net/[ew]*/statistics/tx_bytes)
 
