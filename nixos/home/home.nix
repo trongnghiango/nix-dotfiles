@@ -117,7 +117,9 @@ in
   # =====================================================================
   # 1. PACKAGE INSTALLATION
   # =====================================================================
-  home.packages = coreUtils ++ desktopUtils ++ userApps ++ devTools;
+  home.packages = coreUtils ++ desktopUtils ++ userApps ++ devTools ++ [
+    pkgs.fcitx5-configtool
+  ];;
 
   # =====================================================================
   # 2. INPUT METHOD (BỘ GÕ TIẾNG VIỆT) - CLEAN WAY
@@ -131,7 +133,7 @@ in
     ];
   };
   # Cài thêm tool config (nằm ngoài addons)
-  home.packages = [ pkgs.fcitx5-configtool ];
+  #home.packages = [ pkgs.fcitx5-configtool ];
 
   # =====================================================================
   # 3. SHELL CONFIGURATION (ZSH - NATIVE MODULE)
