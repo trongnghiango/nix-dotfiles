@@ -1,58 +1,114 @@
 #!/bin/sh
 
-# --- Modern Tools Wrappers ---
+# ==============================================================================
+# 1. CORE UTILS & SAFETY
+# ==============================================================================
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
 
-# ls -> eza
+# An toàn là trên hết (Hỏi trước khi ghi đè/xóa)
+alias cp='cp -iv'
+alias mv='mv -iv'
+alias rm='rm -iv'
+alias mkdir='mkdir -pv'
+
+# Xem dung lượng ổ đĩa dễ đọc hơn
+alias df='df -h'
+alias free='free -m'
+
+# ==============================================================================
+# 2. EDITOR (Ưu tiên Neovim)
+# ==============================================================================
+if command -v nvim >/dev/null 2>&1; then
+    alias v='nvim'
+    alias vi='nvim'
+    alias vim='nvim'
+    alias sv='sudo nvim'
+else
+    alias v='vim'
+    alias sv='sudo vim'
+fi
+
+# ==============================================================================
+# 3. MODERN REPLACEMENTS (Eza, Bat, Ripgrep)
+# ==============================================================================
+
+# ls -> eza (Màu sắc & Icon đẹp)
 if command -v eza >/dev/null 2>&1; then
+    # ls cơ bản
     alias ls='eza --icons --group-directories-first'
-    alias ll='eza -al --icons --group-directories-first'
-    alias lt='eza -aT --icons --group-directories-first' # Tree view
+    # List chi tiết
+    alias ll='eza -al --icons --group-directories-first --time-style=long-iso'
+    # Tree view (Thay thế lệnh tree)
+    alias lt='eza -aT --icons --group-directories-first' 
 else
     alias ls='ls --color=auto'
-    alias ll='ls -lah'
+    alias ll='ls -lah --color=auto'
 fi
 
-# cat -> bat
+# cat -> bat (Syntax highlighting)
 if command -v bat >/dev/null 2>&1; then
-    alias cat='bat --style=plain' # Xem nhanh
-    alias catt='bat'              # Xem có line number/header
+    alias cat='bat --style=plain' 
+    alias catt='bat' # Hiện cả số dòng và header
 fi
 
-# grep -> ripgrep
+# grep -> rg (Nhanh hơn)
 if command -v rg >/dev/null 2>&1; then
     alias grep='rg'
 else
     alias grep='grep --color=auto'
 fi
 
-# cd -> zoxide (z)
-if command -v zoxide >/dev/null 2>&1; then
-    # eval "$(zoxide init --cmd cd zsh)" # Hook thẳng vào lệnh cd
+# ==============================================================================
+# 4. SYSTEM MANAGEMENT (Hybrid: NixOS & Arch)
+# ==============================================================================
+
+# -- NixOS --
+if [ -f /etc/NIXOS ]; then
+    # Rebuild hệ thống (Sửa path flake nếu cần)
+    alias nrb='sudo nixos-rebuild switch --flake $HOME/.dotfiles/nixos#thinkbox'
+    # Test cấu hình trước khi switch (An toàn)
+    alias nt='sudo nixos-rebuild test --flake $HOME/.dotfiles/nixos#thinkbox'
+    # Dọn rác Nix
+    alias ncl='nix-collect-garbage -d'
+    # Update Flake
+    alias nup='nix flake update --flake $HOME/.dotfiles/nixos'
+    # Home Manager (Nếu dùng standalone)
+    alias hms='home-manager switch --flake $HOME/.dotfiles/nixos#thinkbox'
 fi
 
-# --- Common Shortcuts ---
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
+# -- Arch Linux (Pacman) --
+if [ -f /etc/arch-release ]; then
+    alias p='sudo pacman'
+    alias update='sudo pacman -Syu'
+    alias install='sudo pacman -S'
+    alias remove='sudo pacman -Rs'
+fi
 
-alias cp='cp -iv'
-alias mv='mv -iv'
-alias rm='rm -iv'
-alias mkdir='mkdir -pv'
-
-# --- Dotfiles Management ---
-alias dots='cd $HOME/.dotfiles && nvim'
-alias nrebuild='sudo nixos-rebuild switch --flake $HOME/.dotfiles/nixos#thinkbox'
-alias nclean='nix-collect-garbage -d'
-
-# --- Git ---
+# ==============================================================================
+# 5. GIT (Shortcuts)
+# ==============================================================================
 alias g='git'
 alias ga='git add'
+alias gaa='git add --all'
 alias gc='git commit -m'
+alias gca='git commit --amend'
 alias gp='git push'
+alias gl='git pull'
 alias gs='git status'
-alias gl='git log --oneline --graph --decorate'
 alias gd='git diff'
+alias glo='git log --oneline --graph --decorate'
+alias gco='git checkout'
+alias gb='git branch'
 
-# --- Networking ---
+# ==============================================================================
+# 6. MISC / WORKFLOW
+# ==============================================================================
+alias dots='cd $HOME/.dotfiles && nvim'
 alias myip='curl ifconfig.me'
+alias reload='source $HOME/.config/shell/profile && echo "Environment reloaded."'
+
+# Fix lỗi hiển thị màu trên một số terminal cũ
+alias diff='diff --color=auto'
+alias ip='ip -color=auto'
