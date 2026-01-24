@@ -1,45 +1,125 @@
 #!/bin/sh
 
-# This file runs when a DM logs you into a graphical session.
-# If you use startx/xinit like a Chad, this file will also be sourced.
+# ===============================================================
+# 1. THIẾT LẬP HIỂN THỊ (DISPLAY)
+# ===============================================================
+# Ưu tiên script từ arandr nếu có, nếu không thì dùng lệnh xrandr mặc định
+# (Đoạn xrandr --output Virtual-1... của bạn được đưa vào fallback)
+if [ -f "$HOME/.screenlayout/default.sh" ]; then
+    . "$HOME/.screenlayout/default.sh"
+else
+    # Fallback cho máy ảo hoặc màn hình mặc định
+    xrandr --output Virtual-1 --mode 1360x768 --rate 60 2>/dev/null || xrandr --auto
+fi
 
-# start IBUS at here
-#ibus-daemon -rxRd &
-#export PATH="$HOME/.local/bin/scripts:$PATH" # -> chua file run-blocks
+# ===============================================================
+# 2. KHỞI TẠO MÔI TRƯỜNG DBUS & SYSTEMD
+# ===============================================================
+# Quan trọng: Giúp các app GUI (như Fcitx5) nhìn thấy biến môi trường
+if command -v dbus-update-activation-environment >/dev/null 2>&1; then
+    dbus-update-activation-environment --systemd --all
+fi
 
-xrandr --output Virtual-1 --mode 1360x768 --rate 60 # Set DPI. User may want to use a larger number for larger screens.
-#xrandr --dpi 96                      # Set DPI. User may want to use a larger number for larger screens.
-
-clipboard-tray &
-#xrdb ${XDG_CONFIG_HOME:-$HOME/.config}/x11/xresources & xrdbpid=$!	# Uncomment to use Xresources colors/settings on startup
-
-# Bogo tieng viet - DUNG Fcitx5
-export GTK_IM_MODULE=fcitx5
-export QT_IM_MODULE=fcitx5
-export XMODIFIERS=@im=fcitx5
-export INPUT_METHOD=fcitx5
+# ===============================================================
+# 3. BỘ GÕ TIẾNG VIỆT (FCITX5)
+# ===============================================================
+# Khai báo biến môi trường (Bắt buộc phải có để gõ được trong app GTK/QT)
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
 export SDL_IM_MODULE=fcitx
-# export GLFW_IM_MODULE=ibus
+export INPUT_METHOD=fcitx
 
-# Nghia fix -> error qquit -> re-login -> audio error <- waiting pipewire start
-# chay lenh sau va comment "pipewire &"
-#systemctl --user start pipewire pipewire-pulse wireplumber
-#systemctl --user enable pipewire pipewire-pulse wireplumber
+# Khởi động Daemon (nếu chưa chạy)
+pgrep -x fcitx5 || fcitx5 -d &
 
-#pipewire &
-#sleep 0.5
+# ===============================================================
+# 4. HÌNH ẢNH & HIỆU ỨNG (VISUALS)
+# ===============================================================
 
-autostart="mpd xcompmgr dunst unclutter remapd"
+# Compositor (Picom): Chạy background (-b).
+# Thêm --experimental-backends nếu dùng Intel GPU cũ (HD4000) để mượt hơn
+pgrep -x picom || picom --experimental-backends -b &
 
-for program in $autostart; do
-  pidof -sx "$program" || "$program" &
-done >/dev/null 2>&1
+# Hình nền: Dùng script setbg của bạn (trong scripts/.local/bin)
+# Nếu không có setbg thì fallback về xwallpaper/feh
+if command -v setbg >/dev/null 2>&1; then
+    setbg "$HOME/.dotfiles/assets/wallpapers/" &
+elif command -v xwallpaper >/dev/null 2>&1; then
+    xwallpaper --zoom "$HOME/.dotfiles/assets/wallpapers/current.jpg" &
+fi
 
-# run script for statusbar
-# start-dwmblocks &
-# run-blocks &
+# ===============================================================
+# 5. XỬ LÝ AUDIO (HYBRID STRATEGY)
+# ===============================================================
+# Logic: NixOS/Arch dùng Systemd, Void dùng Manual.
 
-# Ensure that xrdb has finished running before moving on to start the WM/DE.
-[ -n "$xrdbpid" ] && wait "$xrdbpid"
+start_audio_manual() {
+    # Dành cho Void Linux (Non-Systemd)
+    killall -9 pipewire wireplumber pipewire-pulse 2>/dev/null
+    sleep 0.5
+    pipewire &
+    wireplumber &
+    pipewire-pulse &
+}
 
-#fcitx5 -d &
+start_audio_systemd() {
+    # Dành cho NixOS / Arch
+    # Không cần start thủ công vì socket activation lo rồi.
+    # Chỉ cần đảm bảo service user không bị lỗi.
+    systemctl --user reset-failed pipewire wireplumber pipewire-pulse 2>/dev/null
+    systemctl --user start pipewire wireplumber pipewire-pulse
+}
+
+# Phát hiện OS để chạy đúng hàm
+(
+    if [ -f /etc/nixos/configuration.nix ] || systemctl --user list-units >/dev/null 2>&1; then
+        start_audio_systemd
+    else
+        start_audio_manual
+    fi
+    # Refresh lại status bar sau khi audio lên để hiện icon loa
+    sleep 2 && pkill -RTMIN+11 dwmblocks
+) &
+
+# ===============================================================
+# 6. CÁC ỨNG DỤNG NỀN KHÁC (DAEMONS)
+# ===============================================================
+
+# Danh sách ứng dụng cần chạy 1 lần
+APPS="dunst unclutter remapd mpd"
+
+for program in $APPS; do
+    if command -v "$program" >/dev/null 2>&1; then
+        pgrep -x "$program" || "$program" &
+    fi
+done
+
+# Clipboard Manager (Dùng script wrapper của bạn)
+pgrep -x clipmenud || clipboard-tray &
+
+# Polkit Agent (Quyền Root cho GUI)
+if [ -f /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 ]; then
+    /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &   # Arch/Void
+elif [ -f /run/current-system/sw/libexec/polkit-gnome-authentication-agent-1 ]; then
+    /run/current-system/sw/libexec/polkit-gnome-authentication-agent-1 & # NixOS
+fi
+
+# ===============================================================
+# 7. THANH TRẠNG THÁI (STATUS BAR & TRAY)
+# ===============================================================
+
+# System Tray (Cho icon mạng, fcitx...)
+pgrep -x trayer || trayer --edge top --align left --widthtype request --padding 0 \
+    --SetDockType true --tint 0x222222 --height 24 \
+    --transparent true --alpha 0 &
+
+# Status Bar (Dùng script wrapper để quản lý pid sạch sẽ)
+pgrep -x dwmblocks || start-dwmblocks &
+
+# ===============================================================
+# KẾT THÚC
+# Lưu ý: KHÔNG ĐƯỢC có dòng 'exec dwm' ở đây.
+# File này được 'source' bởi .xinitrc, chạy exec ở đây sẽ làm
+# dừng việc load các tiến trình sau nó hoặc thoát session ngay lập tức.
+# ===============================================================
