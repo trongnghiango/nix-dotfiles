@@ -128,7 +128,7 @@ in
     enabled = "fcitx5";
     fcitx5.addons = with pkgs; [
       fcitx5-gtk        # Hỗ trợ app GTK
-      fcitx5-unikey     # Engine Unikey cũ
+      qt6Packages.fcitx5-unikey  # Engine Unikey cũ
       fcitx5-bamboo     # Engine Bamboo mới (Khuyên dùng)
     ];
   };
