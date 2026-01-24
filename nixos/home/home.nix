@@ -66,7 +66,7 @@ let
     fcitx5-gtk
     fcitx5-bamboo
     # fcitx5-unikey
-    fcitx5-configtool
+    qt6Packages.fcitx5-configtool
   ];
 
   # =====================================================================
