@@ -106,6 +106,10 @@ bindkey -M visual '^[[P' vi-delete
 # Load syntax highlighting; should be last.
 source /usr/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh 2>/dev/null
 
+# Zoxide (cd thay thế)
+if command -v zoxide >/dev/null; then
+    eval "$(zoxide init zsh)"
+fi
 
 export NVM_DIR="$HOME/.config/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
