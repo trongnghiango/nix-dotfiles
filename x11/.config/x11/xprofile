@@ -47,7 +47,7 @@ pgrep -x picom || picom --backend xrender --no-fading-openclose -b &
 # Hình nền: Dùng script setbg của bạn (trong scripts/.local/bin)
 # Nếu không có setbg thì fallback về xwallpaper/feh
 if command -v setbg >/dev/null 2>&1; then
-    setbg "$HOME/Pictures/wallpapers/" &
+    setbg "$HOME/Pictures/Wallpapers/" &
 elif command -v xwallpaper >/dev/null 2>&1; then
     xwallpaper --zoom "$HOME/.dotfiles/assets/wallpapers/current.jpg" &
 fi
