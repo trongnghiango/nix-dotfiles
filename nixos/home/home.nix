@@ -60,6 +60,12 @@ let
     
     # --- System Monitoring ---
     pkgs.libva-utils        # Kiểm tra driver đồ họa (vainfo)
+
+    # Go tieng viet
+    fcitx5
+    fcitx5-gtk
+    fcitx5-bamboo
+    # fcitx5-unikey
   ];
 
   # =====================================================================
