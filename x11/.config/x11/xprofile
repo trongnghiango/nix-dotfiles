@@ -31,8 +31,8 @@ export SDL_IM_MODULE=fcitx
 export INPUT_METHOD=fcitx
 
 # Khởi động Daemon (nếu chưa chạy)
-#pgrep -x fcitx5 || fcitx5 -d &
-pgrep -x picom || picom --backend glx -b &
+pgrep -x fcitx5 || fcitx5 -d &
+
 
 # ===============================================================
 # 4. HÌNH ẢNH & HIỆU ỨNG (VISUALS)
@@ -47,7 +47,7 @@ pgrep -x picom || picom --backend xrender --no-fading-openclose -b &
 # Hình nền: Dùng script setbg của bạn (trong scripts/.local/bin)
 # Nếu không có setbg thì fallback về xwallpaper/feh
 if command -v setbg >/dev/null 2>&1; then
-    setbg "$HOME/.dotfiles/assets/wallpapers/" &
+    setbg "$HOME/Pictures/wallpapers/" &
 elif command -v xwallpaper >/dev/null 2>&1; then
     xwallpaper --zoom "$HOME/.dotfiles/assets/wallpapers/current.jpg" &
 fi
@@ -113,9 +113,9 @@ fi
 # ===============================================================
 
 # System Tray (Cho icon mạng, fcitx...)
-pgrep -x trayer || trayer --edge top --align left --widthtype request --padding 0 \
-    --SetDockType true --tint 0x222222 --height 24 \
-    --transparent true --alpha 0 &
+#pgrep -x trayer || trayer --edge top --align left --widthtype request --padding 0 \
+#    --SetDockType true --tint 0x222222 --height 24 \
+#    --transparent true --alpha 0 &
 
 # Status Bar (Dùng script wrapper để quản lý pid sạch sẽ)
 pgrep -x dwmblocks || start-dwmblocks &
