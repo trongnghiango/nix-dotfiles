@@ -12,26 +12,42 @@
 
   networking.hostName = "vm-z600";
 
-  # Network cho VM
+  # ============================
+  # NETWORK (VM)
+  # ============================
   networking.networkmanager.enable = true;
 
-  # Bootloader (VM dùng UEFI là ổn nhất)
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
+  # ============================
+  # BOOTLOADER (LEGACY BIOS)
+  # ============================
+  boot.loader.grub = {
+    enable = true;
+    device = "/dev/vda";   # đĩa virtio của VM
+    useOSProber = false;
+  };
+
+  # ❌ TẮT HOÀN TOÀN EFI CHO VM
+  boot.loader.systemd-boot.enable = false;
+  boot.loader.efi.canTouchEfiVariables = false;
 
   # ============================
-  # TỐI ƯU RIÊNG CHO VM
+  # VM OPTIMIZATION
   # ============================
 
-  # Guest profile (virtio, balloon, spice)
+  # Guest tools cho libvirt / virt-manager
   services.qemuGuest.enable = true;
   services.spice-vdagentd.enable = true;
 
-  # CPU tối ưu cho host Xeon
-  nix.settings.max-jobs = lib.mkDefault 8;
-  nix.settings.cores = lib.mkDefault 8;
+  # VirtIO + OpenGL (cho desktop.nix dùng)
+  services.xserver.videoDrivers = [ "virtio" ];
+  hardware.opengl.enable = true;
 
-  # Tối ưu RAM cho VM
+  # CPU/RAM tuning nhẹ cho VM
+  nix.settings = {
+    max-jobs = lib.mkDefault 4;
+    cores = lib.mkDefault 4;
+  };
+
   boot.kernel.sysctl = {
     "vm.swappiness" = 10;
     "vm.vfs_cache_pressure" = 50;
