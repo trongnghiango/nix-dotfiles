@@ -1,23 +1,15 @@
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}:
+{ config, pkgs, inputs, lib, ... }:
 
 let
-  # Script copy config đơn giản
-  copyConfig = ''
-    if [ ! -f config.h ] && [ -f config.def.h ]; then
-      cp config.def.h config.h
-    fi
-  '';
-
-  # Dependencies để build Suckless tools
+  # =========================
+  # Build dependencies cho suckless
+  # =========================
   sucklessDeps = with pkgs; [
     pkg-config
     gnumake
     gcc
+    ncurses
+
     xorg.libX11
     xorg.libXft
     xorg.libXinerama
@@ -27,35 +19,40 @@ let
     yajl
     imlib2
     harfbuzz
-    ncurses
   ];
+
+  copyConfig = ''
+    if [ ! -f config.h ] && [ -f config.def.h ]; then
+      cp config.def.h config.h
+    fi
+  '';
 in
 {
-  # --- Overlay: Build DWM/ST từ source ---
+  # =========================
+  # Overlay: suckless custom
+  # =========================
   nixpkgs.overlays = [
     (final: prev: {
-      dwm = pkgs.stdenv.mkDerivation {
+      dwm = prev.stdenv.mkDerivation {
         pname = "dwm-custom";
         version = "6.5";
         src = inputs.dwm-src;
-        nativeBuildInputs = [
-          pkgs.pkg-config
-          pkgs.ncurses
-        ];
+
+        nativeBuildInputs = [ prev.pkg-config ];
         buildInputs = sucklessDeps;
+
         preBuild = copyConfig;
         makeFlags = [ "PREFIX=$(out)" ];
       };
 
-      st = pkgs.stdenv.mkDerivation {
+      st = prev.stdenv.mkDerivation {
         pname = "st-custom";
         version = "0.9";
         src = inputs.st-src;
-        nativeBuildInputs = [
-          pkgs.pkg-config
-          pkgs.ncurses
-        ];
+
+        nativeBuildInputs = [ prev.pkg-config ];
         buildInputs = sucklessDeps;
+
         preBuild = copyConfig;
         preInstall = "mkdir -p $out/share/terminfo";
         makeFlags = [
@@ -64,75 +61,92 @@ in
         ];
       };
 
-      dmenu = pkgs.stdenv.mkDerivation {
+      dmenu = prev.stdenv.mkDerivation {
         pname = "dmenu-custom";
         version = "5.3";
         src = inputs.dmenu-src;
-        nativeBuildInputs = [
-          pkgs.pkg-config
-          pkgs.ncurses
-        ];
+
+        nativeBuildInputs = [ prev.pkg-config ];
         buildInputs = sucklessDeps;
+
         preBuild = copyConfig;
         makeFlags = [ "PREFIX=$(out)" ];
       };
 
-      dwmblocks = pkgs.stdenv.mkDerivation {
-        pname = "dwmblocks-async";
+      dwmblocks = prev.stdenv.mkDerivation {
+        pname = "dwmblocks";
         version = "custom";
         src = inputs.dwmblocks-src;
-        nativeBuildInputs = [ pkgs.pkg-config ];
+
+        nativeBuildInputs = [ prev.pkg-config ];
         buildInputs = sucklessDeps;
-        preBuild = copyConfig;
+
         makeFlags = [ "PREFIX=$(out)" ];
       };
     })
   ];
 
-  # Chỉ cài đúng 4 món này vào hệ thống
+  # =========================
+  # System packages (tối thiểu)
+  # =========================
   environment.systemPackages = with pkgs; [
     dwm
     st
     dmenu
     dwmblocks
+
+    xorg.xrandr
+    xorg.xset
+    xclip
+    feh
   ];
 
-  # --- X11 Configuration ---
-  services.xserver = {
-    enable = true;
-    displayManager.startx.enable = true;
+  # =========================
+  # XORG + STARTX (THUẦN)
+  # =========================
+  services.xserver.enable = true;
+  services.xserver.displayManager.startx.enable = true;
 
-    # THAY ĐỔI Ở ĐÂY: Trỏ windowManager vào gói custom của bạn
-    windowManager.session = [
-      {
-        name = "dwm";
-        start = ''
-          ${pkgs.dwm}/bin/dwm &
-          wait $!
-        '';
-      }
-    ];
+  # Đăng ký dwm đúng chuẩn NixOS
+  services.xserver.windowManager.dwm.enable = true;
+
+  # Không desktop manager
+  services.xserver.desktopManager.xterm.enable = false;
+
+  # =========================
+  # INPUT
+  # =========================
+  services.xserver.libinput.enable = true;
+
+  # =========================
+  # GRAPHICS (tự động theo host)
+  # =========================
+  services.xserver.videoDrivers =
+    if config.hardware.profile.gpu == "intel" then [ "intel" ]
+    else if config.hardware.profile.gpu == "virtio" then [ "virtio" ]
+    else if config.hardware.profile.gpu == "nvidia-legacy" then [ "nvidiaLegacy470" ]
+    else [ ];
+
+  hardware.opengl = {
+    enable = config.hardware.profile.opengl;
+    driSupport = true;
+    driSupport32Bit = config.hardware.profile.opengl;
   };
 
-  # --- Graphics & Drivers ---
-  # hardware.graphics = {
-  #   enable = true;
-  #   extraPackages = with pkgs; [
-  #     intel-vaapi-driver
-  #     libvdpau-va-gl
-  #   ];
-  # };
+  # =========================
+  # VM niceties
+  # =========================
+  services.spice-vdagentd.enable = config.hardware.profile.isVirtual;
+  services.qemuGuest.enable = config.hardware.profile.isVirtual;
 
-  # using for virt-machine
-  services.xserver.videoDrivers = [ "virtio" ];
+  # =========================
+  # GTK apps (nhẹ, cần thiết)
+  # =========================
+  programs.dconf.enable = true;
 
-  environment.sessionVariables = {
-    LIBVA_DRIVER_NAME = "i965";
-  };
-
-  # --- System Services ---
-  services.gvfs.enable = true; # Mount ổ đĩa, USB
-  services.udisks2.enable = true; # Quản lý ổ đĩa
-  services.libinput.enable = true; # Touchpad
-  programs.dconf.enable = true; # Cần cho GTK apps
+  # =========================
+  # Disk & removable (optional)
+  # =========================
+  services.gvfs.enable = true;
+  services.udisks2.enable = true;
 }

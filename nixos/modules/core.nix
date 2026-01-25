@@ -4,6 +4,9 @@
 { config, pkgs, ... }:
 
 {
+  imports = [
+    ./hardware-profile.nix
+  ];
   # 1. Thời gian & Ngôn ngữ
   time.timeZone = "Asia/Ho_Chi_Minh";
   i18n.defaultLocale = "en_US.UTF-8";

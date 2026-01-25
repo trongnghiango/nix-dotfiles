@@ -10,6 +10,13 @@
     ../../modules/audio.nix
   ];
 
+  hardware.profile = {
+    hostType = "vm";
+    cpu = "xeon";
+    gpu = "virtio";
+    isVirtual = true;
+  };
+
   networking.hostName = "vm-z600";
 
   # ============================
