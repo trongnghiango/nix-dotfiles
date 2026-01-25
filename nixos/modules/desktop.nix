@@ -1,4 +1,10 @@
-{ config, pkgs, inputs, lib, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  lib,
+  ...
+}:
 
 let
   # =========================
@@ -81,6 +87,7 @@ in
         nativeBuildInputs = [ prev.pkg-config ];
         buildInputs = sucklessDeps;
 
+        preBuild = copyConfig;
         makeFlags = [ "PREFIX=$(out)" ];
       };
     })
@@ -116,22 +123,22 @@ in
   # =========================
   # INPUT
   # =========================
-  services.xserver.libinput.enable = true;
+  services.libinput.enable = true;
 
   # =========================
   # GRAPHICS (tự động theo host)
   # =========================
   services.xserver.videoDrivers =
-    if config.hardware.profile.gpu == "intel" then [ "intel" ]
-    else if config.hardware.profile.gpu == "virtio" then [ "virtio" ]
-    else if config.hardware.profile.gpu == "nvidia-legacy" then [ "nvidiaLegacy470" ]
-    else [ ];
+    if config.hardware.profile.gpu == "intel" then
+      [ "intel" ]
+    else if config.hardware.profile.gpu == "virtio" then
+      [ "virtio" ]
+    else if config.hardware.profile.gpu == "nvidia-legacy" then
+      [ "nvidiaLegacy470" ]
+    else
+      [ ];
 
-  hardware.opengl = {
-    enable = config.hardware.profile.opengl;
-    driSupport = true;
-    driSupport32Bit = config.hardware.profile.opengl;
-  };
+  hardware.graphics.enable = config.hardware.profile.opengl;
 
   # =========================
   # VM niceties
