@@ -36,9 +36,11 @@ let
   # =====================================================================
   desktopUtilities = with pkgs; [
     # --- Core UI ---
-    picom # Compositor
+    #picom # Compositor
+    xcompmgr # Bộ trộn cửa sổ (giúp ST trong suốt)
+    dunst # Trình thông báo
+    unclutter # Tự ẩn chuột khi không dùng
     rofi # App Launcher & Menu
-    dunst # Notification Daemon
     trayer # System Tray (cho các app như nm-applet)
     xwallpaper # Wallpaper setter (nhẹ hơn feh)
     arandr # GUI chỉnh màn hình (tạo script xrandr)
@@ -183,7 +185,8 @@ in
   # Tách biệt cấu hình giao diện ra file riêng cho gọn
   # =====================================================================
   imports = [
-    ./theme.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
+    #./theme.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
+    ./theme_2.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
   ];
 
   # =====================================================================
@@ -241,6 +244,12 @@ in
     # Pointer cho Zsh (Giữ Home sạch sẽ)
     ".zshenv".text = ''
       export ZDOTDIR="$HOME/.config/zsh"
+      export XDG_CONFIG_HOME="$HOME/.config"
+
+      # Load Profile từ Dotfiles (Nơi chứa mọi logic: env, alias, startx)
+      if [[ -f "$XDG_CONFIG_HOME/shell/profile" ]]; then
+        source "$XDG_CONFIG_HOME/shell/profile"
+      fi
     '';
 
     # -- Shell & Core --

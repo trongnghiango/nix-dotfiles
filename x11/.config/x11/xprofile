@@ -6,10 +6,10 @@
 # Ưu tiên script từ arandr nếu có, nếu không thì dùng lệnh xrandr mặc định
 # (Đoạn xrandr --output Virtual-1... của bạn được đưa vào fallback)
 if [ -f "$HOME/.screenlayout/default.sh" ]; then
-    . "$HOME/.screenlayout/default.sh"
+  . "$HOME/.screenlayout/default.sh"
 else
-    # Fallback cho máy ảo hoặc màn hình mặc định
-    xrandr --output Virtual-1 --mode 1360x768 --rate 60 2>/dev/null || xrandr --auto
+  # Fallback cho máy ảo hoặc màn hình mặc định
+  xrandr --output Virtual-1 --mode 1920x1080 --rate 60 2>/dev/null || xrandr --auto
 fi
 
 # ===============================================================
@@ -17,7 +17,7 @@ fi
 # ===============================================================
 # Quan trọng: Giúp các app GUI (như Fcitx5) nhìn thấy biến môi trường
 if command -v dbus-update-activation-environment >/dev/null 2>&1; then
-    dbus-update-activation-environment --systemd --all
+  dbus-update-activation-environment --systemd --all
 fi
 
 # ===============================================================
@@ -33,6 +33,10 @@ export INPUT_METHOD=fcitx
 # Khởi động Daemon (nếu chưa chạy)
 pgrep -x fcitx5 || fcitx5 -d &
 
+# 2. Nạp Xresources từ Home Manager
+if [ -f "$HOME/.Xresources" ]; then
+  xrdb -merge "$HOME/.Xresources"
+fi
 
 # ===============================================================
 # 4. HÌNH ẢNH & HIỆU ỨNG (VISUALS)
@@ -42,14 +46,16 @@ pgrep -x fcitx5 || fcitx5 -d &
 # Thêm --experimental-backends nếu dùng Intel GPU cũ (HD4000) để mượt hơn
 # Dùng xrender: Cực ổn định cho máy cũ, không bị crash driver Intel
 # --no-fading-openclose: Tắt hiệu ứng fade đóng mở để đỡ lag
-pgrep -x picom || picom --backend xrender --no-fading-openclose -b &
+# Tắt bóng, tắt mờ, chỉ giữ lại VSync để chống xé hình
+pgrep -x picom || picom --backend glx --vscripts --vsync --no-fading-openclose --shadow-exclude 'any' --no-fading-destroyed-argb -b &
+# pgrep -x picom || picom --backend xrender --no-fading-openclose -b &
 
 # Hình nền: Dùng script setbg của bạn (trong scripts/.local/bin)
 # Nếu không có setbg thì fallback về xwallpaper/feh
 if command -v setbg >/dev/null 2>&1; then
-    setbg "$HOME/Pictures/Wallpapers/" &
+  setbg "$HOME/Pictures/Wallpapers/" &
 elif command -v xwallpaper >/dev/null 2>&1; then
-    xwallpaper --zoom "$HOME/.dotfiles/assets/wallpapers/current.jpg" &
+  xwallpaper --zoom "$HOME/.dotfiles/assets/wallpapers/current.jpg" &
 fi
 
 # ===============================================================
@@ -58,44 +64,48 @@ fi
 # Logic: NixOS/Arch dùng Systemd, Void dùng Manual.
 
 start_audio_manual() {
-    # Dành cho Void Linux (Non-Systemd)
-    killall -9 pipewire wireplumber pipewire-pulse 2>/dev/null
-    sleep 0.5
-    pipewire &
-    wireplumber &
-    pipewire-pulse &
+  # Dành cho Void Linux (Non-Systemd)
+  killall -9 pipewire wireplumber pipewire-pulse 2>/dev/null
+  sleep 0.5
+  pipewire &
+  wireplumber &
+  pipewire-pulse &
 }
 
 start_audio_systemd() {
-    # Dành cho NixOS / Arch
-    # Không cần start thủ công vì socket activation lo rồi.
-    # Chỉ cần đảm bảo service user không bị lỗi.
-    systemctl --user reset-failed pipewire wireplumber pipewire-pulse 2>/dev/null
-    systemctl --user start pipewire wireplumber pipewire-pulse
+  # Dành cho NixOS / Arch
+  # Không cần start thủ công vì socket activation lo rồi.
+  # Chỉ cần đảm bảo service user không bị lỗi.
+  systemctl --user reset-failed pipewire wireplumber pipewire-pulse 2>/dev/null
+  systemctl --user start pipewire wireplumber pipewire-pulse
 }
 
 # Phát hiện OS để chạy đúng hàm
 (
-    if [ -f /etc/nixos/configuration.nix ] || systemctl --user list-units >/dev/null 2>&1; then
-        start_audio_systemd
-    else
-        start_audio_manual
-    fi
-    # Refresh lại status bar sau khi audio lên để hiện icon loa
-    sleep 2 && pkill -RTMIN+11 dwmblocks
+  if [ -f /etc/nixos/configuration.nix ] || systemctl --user list-units >/dev/null 2>&1; then
+    start_audio_systemd
+  else
+    start_audio_manual
+  fi
+  # Refresh lại status bar sau khi audio lên để hiện icon loa
+  sleep 2 && pkill -RTMIN+11 dwmblocks
 ) &
 
 # ===============================================================
 # 6. CÁC ỨNG DỤNG NỀN KHÁC (DAEMONS)
 # ===============================================================
 
-# Danh sách ứng dụng cần chạy 1 lần
-APPS="dunst unclutter remapd mpd"
+# ===============================================================
+# CÁC ỨNG DỤNG TỰ ĐỘNG CHẠY (AUTOSTART)
+# ===============================================================
+
+# Danh sách các ứng dụng nền
+APPS="mpd xcompmgr dunst unclutter remapd"
 
 for program in $APPS; do
-    if command -v "$program" >/dev/null 2>&1; then
-        pgrep -x "$program" || "$program" &
-    fi
+  if command -v "$program" >/dev/null 2>&1; then
+    pgrep -x "$program" >/dev/null || "$program" &
+  fi
 done
 
 # Clipboard Manager (Dùng script wrapper của bạn)
@@ -103,9 +113,9 @@ pgrep -x clipmenud || clipboard-tray &
 
 # Polkit Agent (Quyền Root cho GUI)
 if [ -f /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 ]; then
-    /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &   # Arch/Void
+  /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 & # Arch/Void
 elif [ -f /run/current-system/sw/libexec/polkit-gnome-authentication-agent-1 ]; then
-    /run/current-system/sw/libexec/polkit-gnome-authentication-agent-1 & # NixOS
+  /run/current-system/sw/libexec/polkit-gnome-authentication-agent-1 & # NixOS
 fi
 
 # ===============================================================
