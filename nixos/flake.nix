@@ -100,6 +100,27 @@
             }
           ];
         };
+
+	vm-z600 = nixpkgs.lib.nixosSystem {
+	  system = "x86_64-linux";
+
+	  specialArgs = { inherit inputs; };
+
+	  modules = [
+	    ./hosts/vm-z600/default.nix
+
+	    home-manager.nixosModules.home-manager
+	    {
+	      home-manager.useGlobalPkgs = true;
+	      home-manager.useUserPackages = true;
+	      home-manager.users.ka = import ./home/home.nix;
+
+	      home-manager.extraSpecialArgs = {
+		dotfiles = "/home/ka/.dotfiles";
+	      };
+	    }
+	  ];
+	};
       };
     };
 }

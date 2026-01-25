@@ -113,15 +113,6 @@ in
       }
     ];
   };
-  # services.xserver = {
-  #   enable = true;
-  #   xkb.layout = "us";
-  #
-  #   # Tắt display manager (login bằng startx hoặc console) cho nhẹ
-  #   displayManager.startx.enable = true;
-  #
-  #   windowManager.dwm.enable = true;
-  # };
 
   # --- Graphics & Drivers ---
   # hardware.graphics = {
@@ -131,6 +122,10 @@ in
   #     libvdpau-va-gl
   #   ];
   # };
+
+  # using for virt-machine
+  services.xserver.videoDrivers = [ "virtio" ];
+
   environment.sessionVariables = {
     LIBVA_DRIVER_NAME = "i965";
   };
