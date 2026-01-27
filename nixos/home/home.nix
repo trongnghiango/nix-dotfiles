@@ -186,6 +186,7 @@ in
   # =====================================================================
   imports = [
     ./theme.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
+    ./programs/brave.nix
 #./theme_2.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
   ];
 
@@ -202,26 +203,6 @@ in
     ++ lspServers
     ++ formattersAndLinters
     ++ pkgs.lib.optionals true neovimEssentials;
-
-  # =====================================================================
-  # CẤU HÌNH BRAVE (TỐI ƯU CHO THINKPAD X230 / HD4000)
-  # =====================================================================
-  programs.brave = {
-    enable = true;
-    commandLineArgs = [
-      "--enable-features=VaapiVideoDecodeLinuxGL" # VA-API Video Decode
-      "--use-gl=egl"
-      "--ignore-gpu-blocklist" # Ép chạy GPU cũ
-      "--enable-gpu-rasterization"
-      "--enable-zero-copy"
-      "--process-per-site" # Tiết kiệm RAM
-    ];
-    extensions = [
-      { id = "cjpalhdlnbpafiamejdnhcphjbkeiagm"; } # uBlock Origin
-      { id = "omkfmpieigblcllmkgbflkikinpkodjg"; } # enhanced-h264ify (QUAN TRỌNG)
-      { id = "dbepggeogbaibhgnhhndojpepiihcmeb"; } # Vimium
-    ];
-  };
 
   # =====================================================================
   # 2. INPUT METHOD (BỘ GÕ TIẾNG VIỆT) - CLEAN WAY

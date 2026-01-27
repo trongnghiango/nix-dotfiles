@@ -24,13 +24,13 @@
 
       # 2. HÀM TẠO HOST (HÀM THẦN THÁNH ĐỂ TÁCH BIỆT PHẦN CỨNG)
       # Giúp tạo máy mới chỉ trong 1 dòng code
-      mkSystem = { hostName, deviceType, bootMode, uiScale }: 
+      mkSystem = { hostName, deviceType, bootMode, uiScale, gpuType}: 
         nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           
           # Truyền biến vào các file modules/*.nix (NixOS level)
           specialArgs = { 
-            inherit inputs hostName user; 
+            inherit inputs hostName user gpuType; 
             isLaptop = (deviceType == "laptop");
             isEfi = (bootMode == "efi");
             scale = uiScale;
@@ -52,7 +52,7 @@
                 # Truyền biến vào các file home/*.nix (Home Manager level)
                 # Giúp theme.nix tự động co giãn font/cursor theo máy
                 extraSpecialArgs = {
-                  inherit inputs user;
+                  inherit inputs user gpuType;
                   dotfiles = dotfilesPath;
                   isLaptop = (deviceType == "laptop");
                   scale = uiScale;
@@ -75,6 +75,7 @@
           deviceType = "laptop";
           bootMode = "efi";
           uiScale = 1.0;
+          gpuType = "intel-legacy"; 
         };
 
         # Máy ảo Z600 hoặc PC cũ: Desktop, Boot BIOS, Màn hình nhỏ (Scale 1.0)
@@ -84,6 +85,7 @@
           deviceType = "desktop";
           bootMode = "bios";
           uiScale = 1.0;
+          gpuType = "virtio"; # <-- Đánh dấu cho Máy ảo
         };
 
         # Host mới cho máy ảo
@@ -91,7 +93,8 @@
           hostName = "vm-x230";
           deviceType = "desktop"; # Chọn desktop để tắt TLP pin
           bootMode = "efi";       # Thường máy ảo hiện đại chọn EFI (OVMF)
-          uiScale = 1.0;          # Máy ảo cửa sổ nhỏ nên để scale 1.0
+          uiScale = 1.5;          # Máy ảo cửa sổ nhỏ nên để scale 1.0
+          gpuType = "virtio"; # <-- Đánh dấu cho Máy ảo
         };
 
         # Demo máy 4K trong tương lai (Ví dụ Workstation)

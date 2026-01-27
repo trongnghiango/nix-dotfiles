@@ -38,15 +38,35 @@ in
         pname = "dwm-custom";
         version = "6.5";
         src = inputs.dwm-src;
-        nativeBuildInputs = [
-          pkgs.pkg-config
-          pkgs.ncurses
-        ];
+        
+        nativeBuildInputs = [ pkgs.pkg-config pkgs.ncurses ];
         buildInputs = sucklessDeps;
-        preBuild = copyConfig;
+
+        # =============================================================
+        # TỐI ƯU HÓA PRE-BUILD: TIÊM THÔNG SỐ MÀN HÌNH
+        # =============================================================
+        preBuild = ''
+          # 1. Kiểm tra và chuẩn bị file config.h
+          if [ ! -f config.h ]; then
+            cp config.def.h config.h
+          fi
+
+          # 2. Sử dụng Regex (sed) để sửa giá trị trong code C dựa trên thông số từ Flake
+          # Cách này "bất tử" vì nó tìm theo tên biến, không quan tâm giá trị cũ là bao nhiêu.
+          
+          # Sửa chiều cao thanh Bar
+          sed -i 's/static const int bar_height[[:space:]]*=[[:space:]]*[0-9]\+;/static const int bar_height = ${toString display.barHeight};/' config.h
+          
+          # Sửa khoảng cách Gaps (inner gaps ngang và dọc)
+          sed -i 's/static const unsigned int gappih[[:space:]]*=[[:space:]]*[0-9]\+;/static const unsigned int gappih = ${toString display.gap};/' config.h
+          sed -i 's/static const unsigned int gappiv[[:space:]]*=[[:space:]]*[0-9]\+;/static const unsigned int gappiv = ${toString display.gap};/' config.h
+
+          echo "=> [Nix Build] DWM optimized for ${hostName}: Bar=${toString display.barHeight}px, Gaps=${toString display.gap}px"
+        '';
+
         makeFlags = [ "PREFIX=$(out)" ];
       };
-
+     
       st = pkgs.stdenv.mkDerivation {
         pname = "st-custom";
         version = "0.9";
