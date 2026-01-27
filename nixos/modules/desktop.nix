@@ -114,22 +114,6 @@ in
     ];
   };
 
-  # --- Graphics & Drivers ---
-  # hardware.graphics = {
-  #   enable = true;
-  #   extraPackages = with pkgs; [
-  #     intel-vaapi-driver
-  #     libvdpau-va-gl
-  #   ];
-  # };
-
-  # using for virt-machine
-  services.xserver.videoDrivers = [ "virtio" ];
-
-  environment.sessionVariables = {
-    LIBVA_DRIVER_NAME = "i965";
-  };
-
   # --- System Services ---
   services.gvfs.enable = true; # Mount ổ đĩa, USB
   services.udisks2.enable = true; # Quản lý ổ đĩa

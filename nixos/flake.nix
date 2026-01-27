@@ -1,126 +1,106 @@
 {
-  description = "NixOS Configuration for Thinkbox BBBimm";
+  description = "NixOS Pro Configuration - Multi-host System";
 
   inputs = {
-    # Nguồn gói phần mềm chính của NixOS (bản unstable mới nhất)
-    #nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    # NixOS 25.11 (Bản mới nhất tại thời điểm hiện tại)
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
 
-    # Home Manager để quản lý file cấu hình user (dotfiles)
-    # home-manager.url = "github:nix-community/home-manager";
+    # Home Manager đồng bộ version 25.11
     home-manager.url = "github:nix-community/home-manager/release-25.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
-    # =================================================================
-    # KHAI BÁO SOURCE CODE CỤC BỘ (LOCAL SOURCES)
-    # =================================================================
-    # Cú pháp "path:..." bảo Nix lấy code từ thư mục máy tính của bạn.
-    # "flake = false" nghĩa là: đây chỉ là thư mục chứa code C thường,
-    # không phải là một Nix Flake khác.
-
-    # on git -  for prod
-    dwm-src = {
-      url = "github:trongnghiango/nix-suckless?dir=dwm";
-      flake = false;
-    };
-
-    st-src = {
-      url = "github:trongnghiango/nix-suckless?dir=st";
-      flake = false;
-    };
-    dmenu-src = {
-      url = "github:trongnghiango/nix-suckless?dir=dmenu";
-      flake = false;
-    };
-
-    dwmblocks-src = {
-      url = "github:trongnghiango/nix-suckless?dir=dwmblocks";
-      flake = false;
-    };
-
-    # on local - using de test
-    # dwm-src = {
-    #   url = "path:/home/ka/.local/src/dwm";
-    #   flake = false;
-    # };
-    #
-    # st-src = {
-    #   url = "path:/home/ka/.local/src/st";
-    #   flake = false;
-    # };
-    #
-    # dmenu-src = {
-    #   url = "path:/home/ka/.local/src/dmenu";
-    #   flake = false;
-    # };
-    #
-    # dwmblocks-src = {
-    #   url = "path:/home/ka/.local/src/dwmblocks";
-    #   flake = false;
-    # };
+    # --- Suckless Sources (Git Prod) ---
+    dwm-src = { url = "github:trongnghiango/nix-suckless?dir=dwm"; flake = false; };
+    st-src = { url = "github:trongnghiango/nix-suckless?dir=st"; flake = false; };
+    dmenu-src = { url = "github:trongnghiango/nix-suckless?dir=dmenu"; flake = false; };
+    dwmblocks-src = { url = "github:trongnghiango/nix-suckless?dir=dwmblocks"; flake = false; };
   };
 
-  # Thêm biến @inputs vào đây để lấy các nguồn đã khai báo ở trên
-  outputs =
-    {
-      self,
-      nixpkgs,
-      home-manager,
-      ...
-    }@inputs:
-    {
-      nixosConfigurations = {
-        thinkbox = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
+  outputs = { self, nixpkgs, home-manager, ... }@inputs:
+    let
+      # 1. BIẾN TOÀN CỤC (Để đổi 1 nơi là cả hệ thống đổi theo)
+      user = "ka";
+      dotfilesPath = "/home/${user}/.dotfiles";
 
-          # =============================================================
-          # QUAN TRỌNG: Truyền biến 'inputs' vào tất cả các modules con
-          # =============================================================
-          # Dòng này giúp các file như modules/desktop.nix có thể
-          # truy cập được dwm-src, st-src...
-          specialArgs = { inherit inputs; };
+      # 2. HÀM TẠO HOST (HÀM THẦN THÁNH ĐỂ TÁCH BIỆT PHẦN CỨNG)
+      # Giúp tạo máy mới chỉ trong 1 dòng code
+      mkSystem = { hostName, deviceType, bootMode, uiScale }: 
+        nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          
+          # Truyền biến vào các file modules/*.nix (NixOS level)
+          specialArgs = { 
+            inherit inputs hostName user; 
+            isLaptop = (deviceType == "laptop");
+            isEfi = (bootMode == "efi");
+            scale = uiScale;
+          };
 
           modules = [
-            ./hosts/thinkbox/default.nix # File cấu hình chính của máy
+            # Nạp cấu hình riêng của từng Host (Ví dụ: hosts/thinkbox/default.nix)
+            ./hosts/${hostName}/default.nix
 
+            # Cấu hình Home Manager
             home-manager.nixosModules.home-manager
             {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                backupFileExtension = "backup";
+                users.${user} = import ./home/home.nix;
 
-              home-manager.users.ka = import ./home/home.nix;
-
-              # Truyền đường dẫn dotfiles vào Home Manager
-              home-manager.extraSpecialArgs = {
-                dotfiles = "/home/ka/.dotfiles";
+                # Truyền biến vào các file home/*.nix (Home Manager level)
+                # Giúp theme.nix tự động co giãn font/cursor theo máy
+                extraSpecialArgs = {
+                  inherit inputs user;
+                  dotfiles = dotfilesPath;
+                  isLaptop = (deviceType == "laptop");
+                  scale = uiScale;
+                };
               };
-
-              # Tự động đổi tên file config cũ thành .backup nếu bị trùng
-              home-manager.backupFileExtension = "backup";
             }
           ];
         };
+    in
+    {
+      nixosConfigurations = {
+        # =============================================================
+        # 3. DANH SÁCH CÁC MÁY (HOSTS)
+        # Cú pháp: mkSystem { hostName, deviceType, bootMode, uiScale }
+        # =============================================================
 
-	vm-z600 = nixpkgs.lib.nixosSystem {
-	  system = "x86_64-linux";
+        # ThinkPad X230: Laptop, Boot EFI, Màn hình nhỏ (Scale 1.0)
+        thinkbox = mkSystem {
+          hostName = "thinkbox";
+          deviceType = "laptop";
+          bootMode = "efi";
+          uiScale = 1.0;
+        };
 
-	  specialArgs = { inherit inputs; };
+        # Máy ảo Z600 hoặc PC cũ: Desktop, Boot BIOS, Màn hình nhỏ (Scale 1.0)
+        # Chú ý: Cần chỉnh optimize-hw.nix để cài Grub vào đúng ổ đĩa.
+        vm-z600 = mkSystem {
+          hostName = "vm-z600";
+          deviceType = "desktop";
+          bootMode = "bios";
+          uiScale = 1.0;
+        };
 
-	  modules = [
-	    ./hosts/vm-z600/default.nix
+        # Host mới cho máy ảo
+        vm-x230 = mkSystem {
+          hostName = "vm-x230";
+          deviceType = "desktop"; # Chọn desktop để tắt TLP pin
+          bootMode = "efi";       # Thường máy ảo hiện đại chọn EFI (OVMF)
+          uiScale = 1.0;          # Máy ảo cửa sổ nhỏ nên để scale 1.0
+        };
 
-	    home-manager.nixosModules.home-manager
-	    {
-	      home-manager.useGlobalPkgs = true;
-	      home-manager.useUserPackages = true;
-	      home-manager.users.ka = import ./home/home.nix;
-
-	      home-manager.extraSpecialArgs = {
-		dotfiles = "/home/ka/.dotfiles";
-	      };
-	    }
-	  ];
-	};
+        # Demo máy 4K trong tương lai (Ví dụ Workstation)
+        # workstation = mkSystem {
+        #   hostName = "workstation";
+        #   deviceType = "desktop";
+        #   bootMode = "efi";
+        #   uiScale = 1.5; # Chữ tự động to ra 1.5 lần
+        # };
       };
     };
 }

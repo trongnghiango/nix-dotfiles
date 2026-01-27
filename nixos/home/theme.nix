@@ -1,126 +1,155 @@
-{ pkgs, config, ... }:
+{ pkgs, config, scale, ... }: # Nhận biến scale truyền từ flake.nix
 
 let
+  # --- HÀM TÍNH TOÁN SIZE DỰA TRÊN TỶ LỆ MÀN HÌNH ---
+  # builtins.floor để làm tròn xuống số nguyên
+  multiply = size: builtins.floor (size * scale);
+
   # ========================================================================
-  # 1. SOURCE OF TRUTH (BẢNG MÀU TRÍCH XUẤT TỪ CONFIG.H CỦA BẠN)
+  # 1. BẢNG MÀU "YUKINORD-MOCHA" (TRỨ TRỰC TỪ NEOVIM)
   # ========================================================================
   palette = {
-    # Lấy từ ST config.h (Gruvbox)
-    bg = "#282828";
-    fg = "#ebdbb2";
-    alpha = "0.8";
+    # Base Backgrounds
+    bg      = "#1B212B"; # Yukinord bg0 (Editor background)
+    mantle  = "#14171d"; # Panel background
+    crust   = "#0f1115"; # Darker background
 
-    # Accent color lấy từ DWM selbordercolor
-    accent = "#BF616A";
+    # Foreground & Text
+    fg      = "#eceff4"; # Yukinord fg0 (Bright text)
+    subtext = "#d8dee9"; # Editor foreground
+    comment = "#8d929c"; # Comments / Overlay2
 
-    # 16 Colors chuẩn từ ST của bạn
-    color0 = "#282828"; # Black
-    color1 = "#cc241d"; # Red
-    color2 = "#98971a"; # Green
-    color3 = "#d79921"; # Yellow
-    color4 = "#458588"; # Blue
-    color5 = "#b16286"; # Magenta
-    color6 = "#689d6a"; # Cyan
-    color7 = "#a89984"; # White
-    color8 = "#928374"; # Bright Black
-    color9 = "#fb4934"; # Bright Red
-    color10 = "#b8bb26"; # Bright Green
-    color11 = "#fabd2f"; # Bright Yellow
-    color12 = "#83a598"; # Bright Blue
-    color13 = "#d3869b"; # Bright Magenta
-    color14 = "#8ec07c"; # Bright Cyan
-    color15 = "#ebdbb2"; # Bright White
+    # Accent Colors (Yukinord Palette)
+    red     = "#bf616a"; # Yukinord Red
+    orange  = "#d08770"; # Yukinord Orange
+    yellow  = "#ebcb8b"; # Yukinord Yellow
+    green   = "#a3be8c"; # Yukinord Green
+    blue    = "#81a1c1"; # Yukinord Blue
+    purple  = "#b48ead"; # Yukinord Purple
+    cyan    = "#88c0d0"; # Yukinord Cyan (Sky)
+    teal    = "#8fbcbb"; # Yukinord Teal
+
+    # UI Elements
+    border    = "#3b4252"; # Surface0 (Borders)
+    selection = "#5e81ac"; # Sapphire (Selection)
+    statusbar = "#2B3442"; # Thanh trạng thái Yukinord
+
+    alpha = "0.8"; # Độ trong suốt cho ST
   };
 
+  # --- CẤU HÌNH FONT (Tự động co giãn) ---
   fontConfig = {
     name = "Inter";
     package = pkgs.inter;
-    size = 11;
+    size = multiply 11; # X230: 11 | 4K: 16-17
   };
 
+  # --- CẤU HÌNH CURSOR (Tự động co giãn) ---
   cursorConfig = {
     name = "Bibata-Modern-Ice";
     package = pkgs.bibata-cursors;
-    size = 24;
+    size = multiply 24; # X230: 24 | 4K: 36
   };
 
 in
 {
   # ========================================================================
-  # 2. XRESOURCES (ĐỒNG BỘ TRIỆT ĐỂ CHO ST VÀ DWM)
-  # Vì DWM của bạn có phím tắt XK_F5 xrdb, nó sẽ đọc trực tiếp từ đây.
+  # 2. XRESOURCES (ĐỒNG BỘ CHO ST & DWM)
   # ========================================================================
   xresources.properties = {
-    # Chung cho Terminal (ST đọc các biến này)
+    # Terminal Colors (Khớp 100% với Neovim)
     "*.background" = palette.bg;
     "*.foreground" = palette.fg;
-    "*.alpha" = palette.alpha;
-    "st.alpha" = palette.alpha;
+    "*.alpha"      = palette.alpha;
+    "st.alpha"     = palette.alpha;
 
-    # 16 Colors cho ST
-    "*.color0" = palette.color0;
-    "*.color1" = palette.color1;
-    "*.color2" = palette.color2;
-    "*.color3" = palette.color3;
-    "*.color4" = palette.color4;
-    "*.color5" = palette.color5;
-    "*.color6" = palette.color6;
-    "*.color7" = palette.color7;
-    "*.color8" = palette.color8;
-    "*.color9" = palette.color9;
-    "*.color10" = palette.color10;
-    "*.color11" = palette.color11;
-    "*.color12" = palette.color12;
-    "*.color13" = palette.color13;
-    "*.color14" = palette.color14;
-    "*.color15" = palette.color15;
+    # Normal Colors
+    "*.color0" = palette.bg;      # Black
+    "*.color1" = palette.red;     # Red
+    "*.color2" = palette.green;   # Green
+    "*.color3" = palette.yellow;  # Yellow
+    "*.color4" = palette.blue;    # Blue
+    "*.color5" = palette.purple;  # Magenta
+    "*.color6" = palette.cyan;    # Cyan
+    "*.color7" = palette.fg;      # White
 
-    # Biến riêng cho DWM (Nếu bản build DWM của bạn dùng xrdb patch)
-    "dwm.normbgcolor" = palette.bg;
-    "dwm.normfgcolor" = palette.fg;
-    "dwm.selbgcolor" = palette.color4; # Blue làm màu highlight
-    "dwm.selfgcolor" = palette.bg;
-    "dwm.selbordercolor" = palette.accent;
-    "dwm.normbordercolor" = palette.color8;
+    # Bright Colors
+    "*.color8"  = palette.comment; # Bright Black
+    "*.color9"  = palette.red;     # Bright Red
+    "*.color10" = palette.green;   # Bright Green
+    "*.color11" = palette.yellow;  # Bright Yellow
+    "*.color12" = palette.selection; # Bright Blue
+    "*.color13" = palette.purple;  # Bright Magenta
+    "*.color14" = palette.teal;    # Bright Cyan
+    "*.color15" = palette.fg;      # Bright White
 
-    # Mouse
-    "Xcursor.size" = cursorConfig.size;
+    # DWM Specific
+    "dwm.normbgcolor"     = palette.bg;
+    "dwm.normfgcolor"     = palette.subtext;
+    "dwm.normbordercolor" = palette.border;
+
+    "dwm.selbgcolor"      = palette.statusbar;
+    "dwm.selfgcolor"      = palette.fg;
+    "dwm.selbordercolor"  = palette.red;
+
+    # Cursor & Font Scale (Đặc biệt quan trọng cho màn hình độ phân giải cao)
+    "Xcursor.size"  = cursorConfig.size;
     "Xcursor.theme" = cursorConfig.name;
+    "*.font"        = "${fontConfig.name}:size=${toString fontConfig.size}";
   };
 
   # ========================================================================
-  # 3. GTK & QT (ĐỒNG BỘ THEME VỚI MÀU CỦA ST)
+  # 3. GIAO DIỆN GTK & QT (DÙNG THEME NORDIC)
   # ========================================================================
   gtk = {
     enable = true;
+
     font = {
       name = fontConfig.name;
       size = fontConfig.size;
       package = fontConfig.package;
     };
+
     theme = {
-      # Đổi sang Gruvbox-Dark để đồng bộ hoàn toàn với ST của bạn
-      name = "Gruvbox-Dark-B";
-      package = pkgs.gruvbox-gtk-theme;
+      name = "Nordic";
+      package = pkgs.nordic;
     };
+
     iconTheme = {
       name = "Papirus-Dark";
       package = pkgs.papirus-icon-theme;
     };
+
+    # Cấu hình file .gtkrc-2.0 (cho app cũ)
     gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
+    
+    # Ép GTK3/4 sử dụng dark mode
+    gtk3.extraConfig.gtk-application-prefer-dark-theme = 1;
+    gtk4.extraConfig.gtk-application-prefer-dark-theme = 1;
   };
 
+  # Ép QT đồng bộ hoàn toàn với GTK
   qt = {
     enable = true;
     platformTheme.name = "gtk";
     style.name = "adwaita-dark";
   };
 
+  # ========================================================================
+  # 4. CON TRỎ CHUỘT (TỰ ĐỘNG FIX CHO X11)
+  # ========================================================================
   home.pointerCursor = {
     gtk.enable = true;
     x11.enable = true;
     name = cursorConfig.name;
     package = cursorConfig.package;
     size = cursorConfig.size;
+  };
+
+  # Đồng bộ biến môi trường Theme (Dành cho các script shell)
+  home.sessionVariables = {
+    GTK_THEME = "Nordic";
+    XCURSOR_SIZE = "${toString cursorConfig.size}";
+    XCURSOR_THEME = "${cursorConfig.name}";
   };
 }

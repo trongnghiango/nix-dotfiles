@@ -185,8 +185,8 @@ in
   # Tách biệt cấu hình giao diện ra file riêng cho gọn
   # =====================================================================
   imports = [
-    #./theme.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
-    ./theme_2.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
+    ./theme.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
+#./theme_2.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
   ];
 
   # =====================================================================
