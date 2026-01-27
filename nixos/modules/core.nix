@@ -11,7 +11,10 @@
   # 2. Cấu hình Nix (Dọn rác & Tối ưu)
   nixpkgs.config.allowUnfree = true;
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
     auto-optimise-store = true;
   };
   nix.gc = {
@@ -52,9 +55,18 @@
   fonts.fontconfig = {
     enable = true;
     defaultFonts = {
-      monospace = [ "JetBrainsMono Nerd Font" "Noto Color Emoji" ];
-      serif = [ "Noto Serif" "Noto Color Emoji" ];
-      sansSerif = [ "Inter" "Noto Color Emoji" ];
+      monospace = [
+        "JetBrainsMono Nerd Font"
+        "Noto Color Emoji"
+      ];
+      serif = [
+        "Noto Serif"
+        "Noto Color Emoji"
+      ];
+      sansSerif = [
+        "Inter"
+        "Noto Color Emoji"
+      ];
     };
   };
 

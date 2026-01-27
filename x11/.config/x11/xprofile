@@ -9,7 +9,7 @@ if [ -f "$HOME/.screenlayout/default.sh" ]; then
   . "$HOME/.screenlayout/default.sh"
 else
   # Fallback cho máy ảo hoặc màn hình mặc định
-  xrandr --output Virtual-1 --mode 1920x1080 --rate 60 2>/dev/null || xrandr --auto
+  xrandr --output Virtual-1 --mode 1360x768 --rate 60 2>/dev/null || xrandr --auto
 fi
 
 # ===============================================================
