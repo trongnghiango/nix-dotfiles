@@ -10,13 +10,31 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     # --- Suckless Sources (Git Prod) ---
-    dwm-src = { url = "github:trongnghiango/nix-suckless?dir=dwm"; flake = false; };
-    st-src = { url = "github:trongnghiango/nix-suckless?dir=st"; flake = false; };
-    dmenu-src = { url = "github:trongnghiango/nix-suckless?dir=dmenu"; flake = false; };
-    dwmblocks-src = { url = "github:trongnghiango/nix-suckless?dir=dwmblocks"; flake = false; };
+    dwm-src = {
+      url = "github:trongnghiango/nix-suckless?dir=dwm";
+      flake = false;
+    };
+    st-src = {
+      url = "github:trongnghiango/nix-suckless?dir=st";
+      flake = false;
+    };
+    dmenu-src = {
+      url = "github:trongnghiango/nix-suckless?dir=dmenu";
+      flake = false;
+    };
+    dwmblocks-src = {
+      url = "github:trongnghiango/nix-suckless?dir=dwmblocks";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }@inputs:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      home-manager,
+      ...
+    }@inputs:
     let
       # 1. BIẾN TOÀN CỤC (Để đổi 1 nơi là cả hệ thống đổi theo)
       user = "ka";
@@ -24,13 +42,27 @@
 
       # 2. HÀM TẠO HOST (HÀM THẦN THÁNH ĐỂ TÁCH BIỆT PHẦN CỨNG)
       # Giúp tạo máy mới chỉ trong 1 dòng code
-      mkSystem = { hostName, deviceType, bootMode, uiScale, gpuType}: 
+      mkSystem =
+        {
+          hostName,
+          deviceType,
+          bootMode,
+          uiScale,
+          gpuType,
+          display,
+        }:
         nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
-          
+
           # Truyền biến vào các file modules/*.nix (NixOS level)
-          specialArgs = { 
-            inherit inputs hostName user gpuType; 
+          specialArgs = {
+            inherit
+              inputs
+              hostName
+              user
+              gpuType
+              display
+              ;
             isLaptop = (deviceType == "laptop");
             isEfi = (bootMode == "efi");
             scale = uiScale;
@@ -52,7 +84,12 @@
                 # Truyền biến vào các file home/*.nix (Home Manager level)
                 # Giúp theme.nix tự động co giãn font/cursor theo máy
                 extraSpecialArgs = {
-                  inherit inputs user gpuType;
+                  inherit
+                    inputs
+                    user
+                    gpuType
+                    display
+                    ;
                   dotfiles = dotfilesPath;
                   isLaptop = (deviceType == "laptop");
                   scale = uiScale;
@@ -75,7 +112,14 @@
           deviceType = "laptop";
           bootMode = "efi";
           uiScale = 1.0;
-          gpuType = "intel-legacy"; 
+          gpuType = "intel-legacy";
+          display = {
+            width = 1360;
+            height = 768;
+            rate = 60;
+            barHeight = 24;
+            gap = 8;
+          };
         };
 
         # Máy ảo Z600 hoặc PC cũ: Desktop, Boot BIOS, Màn hình nhỏ (Scale 1.0)
@@ -86,15 +130,29 @@
           bootMode = "bios";
           uiScale = 1.0;
           gpuType = "virtio"; # <-- Đánh dấu cho Máy ảo
+          display = {
+            width = 1920;
+            height = 1080;
+            rate = 60;
+            barHeight = 32;
+            gap = 8;
+          };
         };
 
         # Host mới cho máy ảo
         vm-x230 = mkSystem {
           hostName = "vm-x230";
           deviceType = "desktop"; # Chọn desktop để tắt TLP pin
-          bootMode = "efi";       # Thường máy ảo hiện đại chọn EFI (OVMF)
-          uiScale = 1.5;          # Máy ảo cửa sổ nhỏ nên để scale 1.0
+          bootMode = "efi"; # Thường máy ảo hiện đại chọn EFI (OVMF)
+          uiScale = 1.5; # Máy ảo cửa sổ nhỏ nên để scale 1.0
           gpuType = "virtio"; # <-- Đánh dấu cho Máy ảo
+          display = {
+            width = 1360;
+            height = 768;
+            rate = 60;
+            barHeight = 30;
+            gap = 8;
+          };
         };
 
         # Demo máy 4K trong tương lai (Ví dụ Workstation)
