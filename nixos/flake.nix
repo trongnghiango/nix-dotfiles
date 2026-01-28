@@ -144,7 +144,7 @@
           hostName = "vm-x230";
           deviceType = "desktop"; # Chọn desktop để tắt TLP pin
           bootMode = "efi"; # Thường máy ảo hiện đại chọn EFI (OVMF)
-          uiScale = 1.5; # Máy ảo cửa sổ nhỏ nên để scale 1.0
+          uiScale = 1.0; # Máy ảo cửa sổ nhỏ nên để scale 1.0
           gpuType = "virtio"; # <-- Đánh dấu cho Máy ảo
           display = {
             width = 1360;

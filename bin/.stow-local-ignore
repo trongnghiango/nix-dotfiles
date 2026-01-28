@@ -1,4 +1,0 @@
-# Ignore temporary/backup files
-^.*\.bak$
-^.*\.old$
-^.*\.tmp$

@@ -6,6 +6,7 @@
   config,
   pkgs,
   dotfiles,
+  user,
   ...
 }:
 
@@ -177,8 +178,8 @@ let
 
 in
 {
-  home.username = "ka";
-  home.homeDirectory = "/home/ka";
+  home.username = "${user}";
+  home.homeDirectory = "/home/${user}";
 
   # =====================================================================
   # IMPORT MODULES
@@ -186,8 +187,8 @@ in
   # =====================================================================
   imports = [
     ./theme.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
+    ./appimages.nix
     ./programs/brave.nix
-    #./theme_2.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
   ];
 
   # =====================================================================
@@ -260,17 +261,14 @@ in
     ".config/x11".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/x11/.config/x11";
 
     # -- Custom Scripts (Tách biệt) --
-    ".local/bin/base".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/bin/.local/bin";
-    ".local/bin/user".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/user-bin/.local/bin";
+    ".local/bin".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/scripts/.local/bin";
   };
 
   # =====================================================================
   # ENVIRONMENT VARIABLES & PATH
   # =====================================================================
   home.sessionPath = [
-    "$HOME/.local/bin" # DWM, ST (Compiled)
-    "$HOME/.local/bin/base" # Base Scripts
-    "$HOME/.local/bin/user" # User Scripts
+    #"$HOME/.local/bin" # DWM, ST (Compiled)
     "$HOME/go/bin" # Go Tools
     "$HOME/.cargo/bin" # Rust Tools
   ];
