@@ -189,6 +189,7 @@ in
     ./theme.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
     ./programs/brave.nix
     ./programs/appimages.nix
+    ./programs/min.nix
   ];
 
   # =====================================================================
