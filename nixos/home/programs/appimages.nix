@@ -12,8 +12,11 @@ let
     src = pkgs.fetchurl {
       url = "https://github.com/obsidianmd/obsidian-releases/releases/download/v${obsidianVersion}/Obsidian-${obsidianVersion}.AppImage";
       # THAY MÃ HASH BẠN VỪA LẤY ĐƯỢC VÀO ĐÂY
-      # 1ipj0dhj2l8yv3fivffhd4r8xvk0ix3gs71wk1c5clhzk4bf376h
-      hash = "1ipj0dhj2l8yv3fivffhd4r8xvk0ix3gs71wk1c5clhzk4bf376h";
+      # sha256 = "1ipj0dhj2l8yv3fivffhd4r8xvk0ix3gs71wk1c5clhzk4bf376h";
+
+      # THÀNH DÒNG NÀY (Định dạng SRI):
+      hash = "sha256-0JzhFpkfUlZYmDwc/UaPYO6OMmnQuR3d2B5RIWED8sY=";
+
     };
 
     # Các thư viện bổ sung để Obsidian hoạt động ổn định trên NixOS

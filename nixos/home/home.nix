@@ -187,8 +187,8 @@ in
   # =====================================================================
   imports = [
     ./theme.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
-    ./appimages.nix
     ./programs/brave.nix
+    ./programs/appimages.nix
   ];
 
   # =====================================================================
