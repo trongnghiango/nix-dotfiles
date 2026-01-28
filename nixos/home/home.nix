@@ -187,7 +187,7 @@ in
   imports = [
     ./theme.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
     ./programs/brave.nix
-#./theme_2.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
+    #./theme_2.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
   ];
 
   # =====================================================================
@@ -284,6 +284,30 @@ in
   };
 
   # (Đã xóa phần gtk = { ... } vì đã chuyển sang theme.nix)
+
+  xdg.desktopEntries = {
+    # Định nghĩa entry cho LF File Manager (sử dụng lfub)
+    "lf" = {
+      name = "LF File Manager";
+      genericName = "File Manager";
+      comment = "Terminal file manager with image previews";
+
+      # Quan trọng: Chạy lfub bên trong terminal st
+      exec = "st -e lfub %u";
+
+      icon = "system-file-manager";
+      terminal = false; # Để false vì ta đã gọi 'st -e' rồi
+      categories = [
+        "System"
+        "FileTools"
+        "FileManager"
+      ];
+      mimeType = [ "inode/directory" ];
+    };
+
+    # Bạn có thể thêm các app khác tại đây nếu muốn
+    # "my-script" = { ... };
+  };
 
   home.stateVersion = "25.11";
 }
