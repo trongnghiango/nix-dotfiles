@@ -27,6 +27,7 @@ let
     nsxiv # Xem ảnh (Suckless style)
     zathura # Đọc PDF (Vim keybindings)
     mpv # Xem Video (Nhẹ, scriptable)
+    yt-dlp # ho tro xem yt cho trinh duyet qute
     calcurse # Lịch (TUI)
     pavucontrol # Chỉnh âm thanh (GUI cho Pipewire)
   ];
@@ -189,7 +190,8 @@ in
     ./theme.nix # <-- File cấu hình GTK/Cursor/Font bạn vừa tạo
     ./programs/brave.nix
     ./programs/appimages.nix
-    ./programs/min.nix
+    ./programs/min-browser.nix
+    ./programs/qutebrowser.nix
   ];
 
   # =====================================================================
