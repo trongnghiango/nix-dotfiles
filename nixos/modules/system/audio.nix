@@ -1,4 +1,11 @@
-{ config, pkgs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  display,
+  hostName,
+  ...
+}:
 
 {
   # Tắt PulseAudio cũ để tránh conflict
@@ -13,4 +20,3 @@
     wireplumber.enable = true;
   };
 }
-

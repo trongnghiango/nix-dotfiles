@@ -1,7 +1,14 @@
 # ------
 # System (core.nix): Chỉ chứa driver, kernel, công cụ cứu hộ (vim, git) và những thứ cần quyền root.
 # ------
-{ config, pkgs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  display,
+  hostName,
+  ...
+}:
 
 {
   # 1. Thời gian & Ngôn ngữ
