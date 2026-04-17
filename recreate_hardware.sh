@@ -3,7 +3,7 @@
 BACKUP_DIR="$HOME/nixos-backups"
 CONFIG_DIR="$HOME/.dotfiles/nixos"
 DATE=$(date +%Y%m%d-%H%M%S)
-MY_HOST=vm-x230
+MY_HOST=generic-vm
 HW_FILE="$CONFIG_DIR/hosts/$MY_HOST/hardware-configuration.nix"
 
 echo "=== Tạo lại Hardware Configuration ==="

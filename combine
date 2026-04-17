@@ -1,0 +1,595 @@
+#!/usr/bin/env bash
+
+# ============================================
+# FILE COMBINER PRO - Combine text/source files into markdown
+# Version: 2.2 (Fixed for Python projects)
+# Features: Smart file detection, regex ignore, syntax highlighting
+# ============================================
+
+# Default values
+PATH_DIR="."
+OUTPUT_FILE="output.md"
+IGNORE_PATTERNS=()
+VERBOSE=false
+MAX_FILE_SIZE_MB=10
+
+# Default ignore patterns for non-text files and common directories
+DEFAULT_IGNORE_PATTERNS=(
+  # Images
+  '.*\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|tiff|psd|ai|sketch|fig)$'
+  # Videos
+  '.*\.(mp4|avi|mov|mkv|webm|flv|wmv|m4v|mpg|mpeg|3gp)$'
+  # Audio
+  '.*\.(mp3|wav|ogg|flac|aac|m4a|wma)$'
+  # Documents
+  '.*\.(pdf|doc|docx|xls|xlsx|ppt|pptx|odt|ods|odp|pages|numbers|key)$'
+  # Archives
+  '.*\.(zip|rar|tar|gz|bz2|7z|xz|zst|tgz)$'
+  # Binaries/Executables
+  '.*\.(exe|dll|so|dylib|bin|hex|o|obj|jar|war|ear)$'
+  # Python bytecode - CHỈ BỎ QUA .pyc/.pyo
+  '.*\.(pyc|pyo)$'
+  # Databases
+  '.*\.(db|sqlite|sqlite3|mdb|accdb|frm|myd|myi)$'
+  # System files
+  '(^|/)(\.DS_Store|Thumbs\.db|desktop\.ini|\.spotlight|\.Trashes)$'
+  # Logs and temporary files
+  '.*\.(log|tmp|temp|swp|swo|pid|lock)$'
+)
+
+# File extension to language mapping for syntax highlighting
+declare -A LANGUAGE_MAP=(
+  ["sh"]="bash"
+  ["bash"]="bash"
+  ["zsh"]="bash"
+  ["py"]="python"
+  ["js"]="javascript"
+  ["jsx"]="jsx"
+  ["ts"]="typescript"
+  ["tsx"]="tsx"
+  ["java"]="java"
+  ["c"]="c"
+  ["cpp"]="cpp"
+  ["cc"]="cpp"
+  ["h"]="c"
+  ["hpp"]="cpp"
+  ["cs"]="csharp"
+  ["go"]="go"
+  ["rb"]="ruby"
+  ["php"]="php"
+  ["html"]="html"
+  ["htm"]="html"
+  ["css"]="css"
+  ["scss"]="scss"
+  ["sass"]="sass"
+  ["less"]="less"
+  ["sql"]="sql"
+  ["xml"]="xml"
+  ["yaml"]="yaml"
+  ["yml"]="yaml"
+  ["json"]="json"
+  ["md"]="markdown"
+  ["txt"]="text"
+  ["cfg"]="ini"
+  ["conf"]="ini"
+  ["ini"]="ini"
+  ["toml"]="toml"
+  ["rs"]="rust"
+  ["swift"]="swift"
+  ["kt"]="kotlin"
+  ["kts"]="kotlin"
+  ["scala"]="scala"
+  ["lua"]="lua"
+  ["pl"]="perl"
+  ["r"]="r"
+  ["m"]="matlab"
+  ["vue"]="vue"
+  ["svelte"]="svelte"
+  ["dart"]="dart"
+  ["elm"]="elm"
+  ["ex"]="elixir"
+  ["exs"]="elixir"
+  ["hs"]="haskell"
+  ["fs"]="fsharp"
+  ["ml"]="ocaml"
+  ["clj"]="clojure"
+  ["cljs"]="clojure"
+  ["groovy"]="groovy"
+  ["gradle"]="groovy"
+  ["dockerfile"]="dockerfile"
+  ["tf"]="hcl"
+  ["hcl"]="hcl"
+  ["ps1"]="powershell"
+)
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+PURPLE='\033[0;35m'
+NC='\033[0m' # No Color
+
+# Function to display help
+show_help() {
+  cat <<EOF
+${CYAN}File Combiner Pro - Combine text/source files into markdown${NC}
+Version: 2.2
+
+${GREEN}Usage:${NC} $(basename "$0") [OPTIONS]
+
+${GREEN}Options:${NC}
+  -p, --path=<directory>    Directory to scan (default: current directory)
+  -o, --out=<file>          Output markdown file (default: output.md)
+  -i, --ignore=<pattern>    Regex pattern to ignore (can be used multiple times)
+  -a, --all-files           Include all files (ignore default patterns)
+  -v, --verbose             Show detailed processing information
+  -m, --max-size=<MB>       Maximum file size in MB (default: 10)
+  -h, --help                Display this help message
+
+${GREEN}Examples:${NC}
+  $(basename "$0") --path=src --out=docs/codebase.md
+  $(basename "$0") -p=. -o=combined.md -i='node_modules' -i='test.*\.js'
+  $(basename "$0") --path=/projects --max-size=5 --verbose
+
+${YELLOW}Note:${NC} Script automatically ignores binary/non-text files by default.
+Use --all-files to include everything.
+EOF
+  exit 0
+}
+
+# Function to print verbose messages
+verbose_msg() {
+  if [ "$VERBOSE" = true ]; then
+    echo -e "${BLUE}[INFO]${NC} $1" >&2
+  fi
+}
+
+# Function to print warning messages
+warning_msg() {
+  echo -e "${YELLOW}[WARN]${NC} $1" >&2
+}
+
+# Function to print error messages
+error_msg() {
+  echo -e "${RED}[ERROR]${NC} $1" >&2
+}
+
+# Function to print success messages
+success_msg() {
+  echo -e "${GREEN}[SUCCESS]${NC} $1" >&2
+}
+
+# Parse command line arguments
+ALL_FILES=false
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+  -p=* | --path=*) PATH_DIR="${1#*=}" ;;
+  -o=* | --out=*) OUTPUT_FILE="${1#*=}" ;;
+  -i=* | --ignore=*) IGNORE_PATTERNS+=("${1#*=}") ;;
+  -a | --all-files) ALL_FILES=true ;;
+  -v | --verbose) VERBOSE=true ;;
+  -m=* | --max-size=*) MAX_FILE_SIZE_MB="${1#*=}" ;;
+  -h | --help) show_help ;;
+  *)
+    error_msg "Unknown parameter: $1"
+    show_help
+    exit 1
+    ;;
+  esac
+  shift
+done
+
+# Add default ignore patterns unless --all-files is specified
+if [ "$ALL_FILES" = false ]; then
+  IGNORE_PATTERNS=("${DEFAULT_IGNORE_PATTERNS[@]}" "${IGNORE_PATTERNS[@]}")
+fi
+
+# Error checking functions
+validate_directory() {
+  if [ ! -d "$PATH_DIR" ]; then
+    error_msg "Directory '$PATH_DIR' does not exist or is not a directory"
+    exit 1
+  fi
+
+  # Get absolute path
+  PATH_DIR=$(cd "$PATH_DIR" && pwd 2>/dev/null || echo "$PATH_DIR")
+
+  if [ ! -r "$PATH_DIR" ]; then
+    error_msg "Directory '$PATH_DIR' is not readable"
+    exit 1
+  fi
+
+  verbose_msg "Directory validated: $PATH_DIR"
+}
+
+validate_output() {
+  local output_dir=$(dirname "$OUTPUT_FILE")
+  local output_file_name=$(basename "$OUTPUT_FILE")
+
+  # Handle relative paths
+  if [ "$output_dir" = "." ] || [ -z "$output_dir" ]; then
+    output_dir="$PWD"
+    OUTPUT_FILE="$output_dir/$output_file_name"
+  else
+    # Get absolute path for output directory
+    output_dir=$(mkdir -p "$output_dir" && cd "$output_dir" && pwd 2>/dev/null || echo "$output_dir")
+    OUTPUT_FILE="$output_dir/$output_file_name"
+  fi
+
+  # Create output directory if it doesn't exist
+  if [ ! -d "$output_dir" ]; then
+    verbose_msg "Creating output directory: $output_dir"
+    mkdir -p "$output_dir" 2>/dev/null || {
+      error_msg "Failed to create output directory: $output_dir"
+      exit 1
+    }
+  fi
+
+  if [ ! -w "$output_dir" ]; then
+    error_msg "Cannot write to output directory: $output_dir"
+    exit 1
+  fi
+
+  # Check if output file already exists
+  if [ -f "$OUTPUT_FILE" ]; then
+    echo -e "${YELLOW}Warning: Output file '$OUTPUT_FILE' already exists.${NC}"
+    read -p "Overwrite? (y/N): " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+      warning_msg "Operation cancelled"
+      exit 1
+    fi
+  fi
+
+  verbose_msg "Output file validated: $OUTPUT_FILE"
+}
+
+validate_max_size() {
+  if ! [[ "$MAX_FILE_SIZE_MB" =~ ^[0-9]+$ ]] || [ "$MAX_FILE_SIZE_MB" -le 0 ]; then
+    error_msg "Max size must be a positive integer"
+    exit 1
+  fi
+}
+
+# Perform validations
+validate_directory
+validate_output
+validate_max_size
+
+# Function to get file extension
+get_extension() {
+  local file="$1"
+  local filename=$(basename -- "$file")
+  local extension="${filename##*.}"
+
+  # Handle files without extension
+  if [[ "$filename" == "$extension" ]] || [[ "$extension" == *"/"* ]] || [ -z "$extension" ]; then
+    echo ""
+  else
+    echo "${extension,,}" # Convert to lowercase
+  fi
+}
+
+# Function to get language for syntax highlighting
+get_language() {
+  local file="$1"
+  local extension=$(get_extension "$file")
+
+  # Special cases for files without extension or with special names
+  local filename=$(basename -- "$file")
+
+  case "$filename" in
+  "Dockerfile"* | "dockerfile"* | *".dockerfile")
+    echo "dockerfile"
+    return 0
+    ;;
+  "Makefile" | "makefile" | "GNUmakefile" | *".mk")
+    echo "makefile"
+    return 0
+    ;;
+  ".gitignore" | ".dockerignore" | ".eslintrc" | ".prettierrc" | ".env"*)
+    echo "gitignore"
+    return 0
+    ;;
+  ".bashrc" | ".bash_profile" | ".zshrc" | ".profile" | "*.bash" | "*.zsh")
+    echo "bash"
+    return 0
+    ;;
+  esac
+
+  # Check in language map
+  if [ -n "$extension" ] && [ -n "${LANGUAGE_MAP[$extension]}" ]; then
+    echo "${LANGUAGE_MAP[$extension]}"
+  else
+    echo "text"
+  fi
+}
+
+# Function to check if file should be ignored
+should_ignore() {
+  local file="$1"
+
+  # Skip the output file itself
+  if [[ "$file" == "$OUTPUT_FILE" ]]; then
+    return 0
+  fi
+
+  # Get relative path from base directory
+  local relative_path="${file#$PATH_DIR/}"
+  if [[ "$relative_path" == "$file" ]]; then
+    # If not a subpath, use full path
+    relative_path="$file"
+  fi
+
+  # Special handling for __pycache__ directories
+  if [[ "$relative_path" == *"/__pycache__/"* ]] || [[ "$relative_path" == "__pycache__/"* ]]; then
+    verbose_msg "Ignoring __pycache__ file: $relative_path"
+    return 0
+  fi
+
+  # Special handling for node_modules
+  if [[ "$relative_path" == *"/node_modules/"* ]] || [[ "$relative_path" == "node_modules/"* ]]; then
+    verbose_msg "Ignoring node_modules file: $relative_path"
+    return 0
+  fi
+
+  # Check ignore patterns (regex)
+  for pattern in "${IGNORE_PATTERNS[@]}"; do
+    if [[ "$relative_path" =~ $pattern ]] || [[ "$file" =~ $pattern ]]; then
+      verbose_msg "Ignored by pattern '$pattern': $relative_path"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+# Function to check if file is binary (SIMPLIFIED VERSION)
+is_binary() {
+  local file="$1"
+
+  # Check if file exists and is readable
+  if [ ! -r "$file" ]; then
+    return 1
+  fi
+
+  # Check file size first
+  local file_size=0
+  if command -v stat >/dev/null 2>&1; then
+    file_size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
+  else
+    file_size=$(du -b "$file" 2>/dev/null | cut -f1)
+  fi
+
+  if [ -z "$file_size" ] || [ "$file_size" -eq 0 ]; then
+    return 1 # Empty file is not binary
+  fi
+
+  local max_bytes=$((MAX_FILE_SIZE_MB * 1024 * 1024))
+
+  if [ "$file_size" -gt "$max_bytes" ]; then
+    warning_msg "File too large ($((file_size / 1024))KB > ${MAX_FILE_SIZE_MB}MB): $file"
+    return 0
+  fi
+
+  if [ "$ALL_FILES" = false ]; then
+    # Get file extension
+    local extension=$(get_extension "$file")
+
+    # Always include source code files regardless of content
+    case "$extension" in
+    py | js | ts | tsx | java | c | cpp | h | hpp | cs | go | rb | php | html | css | scss | less | sql | xml | yaml | yml | json | md | txt | rs | swift | kt | kts | scala | lua | pl | r | m | vue | svelte | dart | elm | ex | exs | hs | fs | ml | clj | cljs | groovy | sh | bash | zsh | ps1 | tf | hcl | cfg | conf | ini | toml)
+      # These are source/text files, don't mark as binary
+      return 1
+      ;;
+    esac
+
+    # Simple NULL byte check for remaining files
+    if head -c 1024 "$file" | tr -d '\0' | grep -q $'\x00' 2>/dev/null; then
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+# Function to process each file
+process_file() {
+  local file="$1"
+
+  # Skip ignored files
+  if should_ignore "$file"; then
+    echo "ignore"
+    return 1
+  fi
+
+  # Skip binary files unless --all-files is specified
+  if [ "$ALL_FILES" = false ] && is_binary "$file"; then
+    warning_msg "Skipping binary/large file: $file"
+    echo "binary"
+    return 1
+  fi
+
+  # Check if file is readable
+  if [ ! -r "$file" ]; then
+    warning_msg "File not readable: $file"
+    echo "unreadable"
+    return 1
+  fi
+
+  # Get language for syntax highlighting
+  local language=$(get_language "$file")
+
+  # Get relative path for display
+  local relative_path="${file#$PATH_DIR/}"
+  if [ "$relative_path" = "$file" ]; then
+    relative_path="$file"
+  fi
+
+  verbose_msg "Processing: $relative_path ($language)"
+
+  # Write file header with language
+  echo "## File: \`$relative_path\`" >>"$OUTPUT_FILE"
+  echo "\`\`\`$language" >>"$OUTPUT_FILE"
+
+  # Try to read and write file content
+  if command -v cat >/dev/null 2>&1; then
+    # Use cat with error handling
+    if ! cat "$file" >>"$OUTPUT_FILE" 2>/dev/null; then
+      warning_msg "Failed to read file: $file"
+      echo "[ERROR READING FILE]" >>"$OUTPUT_FILE"
+      echo "error"
+      return 1
+    fi
+  else
+    # Fallback to while read loop
+    while IFS= read -r line || [ -n "$line" ]; do
+      echo "$line" >>"$OUTPUT_FILE"
+    done <"$file" 2>/dev/null || {
+      warning_msg "Failed to read file: $file"
+      echo "[FILE READ ERROR]" >>"$OUTPUT_FILE"
+      echo "error"
+      return 1
+    }
+  fi
+
+  # Close code block
+  echo -e "\n\`\`\`\n" >>"$OUTPUT_FILE"
+
+  echo "success"
+  return 0
+}
+
+# Main processing function
+main() {
+  # Create or clear the output file
+  >"$OUTPUT_FILE" 2>/dev/null || {
+    error_msg "Failed to create/clear output file: $OUTPUT_FILE"
+    exit 1
+  }
+
+  # Write header to output file
+  {
+    echo "# Combined Files Documentation"
+    echo ""
+    echo "**Generated on:** $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "**Source directory:** \`$PATH_DIR\`"
+    echo "**Output file:** \`$OUTPUT_FILE\`"
+    echo ""
+    echo "## Summary"
+    echo "This document contains combined contents of text/source files from the specified directory."
+    echo ""
+    echo "---"
+    echo ""
+  } >>"$OUTPUT_FILE"
+
+  echo -e "${CYAN}Starting file processing...${NC}"
+  echo -e "${BLUE}Directory:${NC} $PATH_DIR"
+  echo -e "${BLUE}Output:${NC} $OUTPUT_FILE"
+  echo -e "${BLUE}Max file size:${NC} ${MAX_FILE_SIZE_MB}MB"
+  echo -e "${BLUE}Ignore patterns:${NC} ${#IGNORE_PATTERNS[@]} patterns"
+
+  if [ "$VERBOSE" = true ] && [ "$ALL_FILES" = false ]; then
+    verbose_msg "Default ignore patterns enabled"
+  fi
+
+  # Counters for statistics
+  local total_files=0
+  local processed_files=0
+  local ignored_files=0
+  local binary_files=0
+  local error_files=0
+
+  echo ""
+  echo -e "${YELLOW}Scanning files...${NC}"
+
+  # Find and process files
+  # Using while loop to process each file
+  find "$PATH_DIR" -type f | while IFS= read -r file; do
+    ((total_files++))
+
+    local result=$(process_file "$file")
+
+    case "$result" in
+    "success")
+      ((processed_files++))
+      ;;
+    "binary")
+      ((binary_files++))
+      ((ignored_files++))
+      ;;
+    "ignore")
+      ((ignored_files++))
+      ;;
+    "unreadable" | "error")
+      ((error_files++))
+      ((ignored_files++))
+      ;;
+    esac
+
+    # Show progress
+    if [ $((total_files % 10)) -eq 0 ]; then
+      echo -ne "${CYAN}Scanned: $total_files | Processed: $processed_files | Ignored: $ignored_files${NC}\r" >&2
+    fi
+
+  done
+
+  # Clear progress line
+  echo -ne "\033[K" >&2
+
+  # Write footer with statistics
+  {
+    echo ""
+    echo "---"
+    echo ""
+    echo "## Statistics"
+    echo "- **Total files found:** $total_files"
+    echo "- **Files processed:** $processed_files"
+    echo "- **Files ignored:** $ignored_files"
+    [ "$binary_files" -gt 0 ] && echo "- **Binary files skipped:** $binary_files"
+    [ "$error_files" -gt 0 ] && echo "- **Files with errors:** $error_files"
+    echo ""
+    echo "**Generation completed:** $(date '+%Y-%m-%d %H:%M:%S')"
+  } >>"$OUTPUT_FILE"
+
+  # Print summary
+  echo ""
+  success_msg "File combination completed!"
+  echo "┌─────────────────────────────────────────────────┐"
+  printf "│ ${CYAN}%-45s${NC} │\n" "Summary Report"
+  echo "├─────────────────────────────────────────────────┤"
+  printf "│ ${GREEN}✓ Output file:${NC} %-30s │\n" "$(basename "$OUTPUT_FILE")"
+  printf "│ ${GREEN}✓ Total files:${NC} %-30d │\n" "$total_files"
+  printf "│ ${GREEN}✓ Processed:${NC} %-31d │\n" "$processed_files"
+  printf "│ ${YELLOW}⚠ Ignored:${NC} %-32d │\n" "$ignored_files"
+  [ "$binary_files" -gt 0 ] && printf "│ ${YELLOW}⚠ Binary skipped:${NC} %-26d │\n" "$binary_files"
+  [ "$error_files" -gt 0 ] && printf "│ ${RED}✗ Errors:${NC} %-34d │\n" "$error_files"
+  echo "├─────────────────────────────────────────────────┤"
+  printf "│ ${BLUE}ℹ Directory:${NC} %-31s │\n" "$(basename "$PATH_DIR")"
+  echo "└─────────────────────────────────────────────────┘"
+
+  if [ "$processed_files" -eq 0 ]; then
+    warning_msg "No files were processed. Check:"
+    warning_msg "  1. Directory contains text files"
+    warning_msg "  2. Ignore patterns are not too restrictive"
+    warning_msg "  3. File permissions are correct"
+  else
+    # Show file size of output
+    local output_size=$(du -h "$OUTPUT_FILE" 2>/dev/null || echo "unknown")
+    success_msg "Output file size: $output_size"
+    success_msg "Files processed successfully!"
+  fi
+}
+
+# Trap errors and cleanup
+cleanup() {
+  echo ""
+  error_msg "Script interrupted by user"
+  exit 1
+}
+
+trap cleanup INT TERM
+
+# Run main function
+main "$@"

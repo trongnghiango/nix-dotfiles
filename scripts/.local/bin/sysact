@@ -55,22 +55,29 @@ case "$selected" in
     *'Lock')
         lock ;;
     *'Leave'*)
-        # Gửi tín hiệu kết thúc cho DWM để thoát ra TTY/Login manager
-        #kill -TERM "$(get_wm_pid)" ;;
         ka-exit ;;
     *'Renew'*)
-        # Restart DWM tại chỗ (Cần patch restartsig)
         kill -HUP "$(get_wm_pid)" ;;
     *'Hibernate')
-        # Chạy lock trước rồi mới ngủ đông
-        slock & systemctl hibernate ;;
+        slock &
+        if command -v systemctl >/dev/null 2>&1; then systemctl hibernate
+        elif command -v loginctl >/dev/null 2>&1; then loginctl hibernate
+        elif command -v ZZZ >/dev/null 2>&1; then sudo ZZZ
+        fi ;;
     *'Sleep')
-        # Chạy lock trước rồi mới sleep
-        slock & systemctl suspend ;;
+        slock &
+        if command -v systemctl >/dev/null 2>&1; then systemctl suspend
+        elif command -v loginctl >/dev/null 2>&1; then loginctl suspend
+        elif command -v zzz >/dev/null 2>&1; then sudo zzz
+        fi ;;
     *'Reboot')
-        systemctl reboot ;;
+        if command -v systemctl >/dev/null 2>&1; then systemctl reboot
+        elif command -v loginctl >/dev/null 2>&1; then loginctl reboot
+        else sudo reboot; fi ;;
     *'Shutdown')
-        systemctl poweroff ;;
+        if command -v systemctl >/dev/null 2>&1; then systemctl poweroff
+        elif command -v loginctl >/dev/null 2>&1; then loginctl poweroff
+        else sudo poweroff; fi ;;
     *'Display'*)
         xset dpms force off ;;
 esac
