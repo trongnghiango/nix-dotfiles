@@ -1,17 +1,21 @@
 #!/bin/sh
-
 # Syncs repositories and downloads updates, meant to be run as a cronjob.
 
-notify-send "📦 Repository Sync" "Checking for package updates..."
-
-sudo pacman -Syyuw --noconfirm || notify-send "Error downloading updates.
-
-Check your internet connection, if pacman is already running, or run update manually to see errors."
 pkill -RTMIN+8 "${STATUSBAR:-dwmblocks}"
 
-if pacman -Qu | grep -v "\[ignored\]"
-then
-	notify-send "🎁 Repository Sync" "Updates available. Click statusbar icon (📦) for update."
+if command -v pacman >/dev/null 2>&1; then
+    notify-send "📦 Repository Sync" "Checking for Arch package updates..."
+    sudo pacman -Syyuw --noconfirm || notify-send "Error downloading updates. Check internet."
+    if pacman -Qu | grep -v "\[ignored\]" >/dev/null 2>&1; then
+        notify-send "🎁 Repository Sync" "Updates available. Click statusbar icon (📦) for update."
+    fi
+elif command -v xbps-install >/dev/null 2>&1; then
+    notify-send "📦 Repository Sync" "Checking for Void package updates..."
+    sudo xbps-install -S || notify-send "Error syncing Void repos."
+    if [ "$(xbps-install -Mun 2>/dev/null | wc -l)" -gt 0 ]; then
+        notify-send "🎁 Repository Sync" "Void updates available. Update via terminal."
+    fi
 else
-	notify-send "📦 Repository Sync"  "Sync complete. No new packages for update."
+    # NixOS: Không cần làm gì vì update qua flake
+    exit 0
 fi
