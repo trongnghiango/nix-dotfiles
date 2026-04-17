@@ -1,29 +1,29 @@
 #!/bin/sh
-
-# Displays number of upgradeable packages.
-# For this to work, have a `pacman -Sy` command run in the background as a
-# cronjob every so often as root. This script will then read those packages.
-# When clicked, it will run an upgrade via pacman.
-#
-# Add the following text as a file in /usr/share/libalpm/hooks/statusbar.hook:
-#
-# [Trigger]
-# Operation = Upgrade
-# Type = Package
-# Target = *
-#
-# [Action]
-# Description = Updating statusbar...
-# When = PostTransaction
-# Exec = /usr/bin/pkill -RTMIN+8 dwmblocks # Or i3blocks if using i3.
+# Hiển thị số lượng gói cần update (Hỗ trợ Arch và Void)
 
 case $BLOCK_BUTTON in
-	1) setsid -f "$TERMINAL" -e sb-popupgrade ;;
-	2) notify-send "$(/usr/bin/pacman -Qu)" ;;
-	3) notify-send "🎁 Upgrade module" "📦: number of upgradable packages
-- Left click to upgrade packages
-- Middle click to show upgradable packages" ;;
+	1) 
+        if command -v pacman >/dev/null 2>&1; then setsid -f "$TERMINAL" -e sb-popupgrade
+        elif command -v xbps-install >/dev/null 2>&1; then setsid -f "$TERMINAL" -e sudo xbps-install -Su; fi
+        ;;
+	2) 
+        if command -v pacman >/dev/null 2>&1; then notify-send "$(/usr/bin/pacman -Qu)"
+        elif command -v xbps-install >/dev/null 2>&1; then notify-send "Chạy cập nhật Void qua terminal"; fi
+        ;;
+	3) notify-send "🎁 Upgrade module" "📦: number of upgradable packages\n- Left click to upgrade packages" ;;
 	6) setsid -f "$TERMINAL" -e "$EDITOR" "$0" ;;
 esac
 
-pacman -Qu | grep -Fcv "[ignored]" | sed "s/^/📦/;s/^📦0$//g"
+if command -v pacman >/dev/null 2>&1; then
+    updates=$(pacman -Qu 2>/dev/null | grep -Fcv "[ignored]")
+    [ -z "$updates" ] || [ "$updates" = "0" ] && exit 0
+    echo "📦$updates"
+elif command -v xbps-install >/dev/null 2>&1; then
+    # Void Linux check update
+    updates=$(xbps-install -Mun 2>/dev/null | wc -l)
+    [ -z "$updates" ] || [ "$updates" = "0" ] && exit 0
+    echo "📦$updates"
+else
+    # Không phải Arch/Void (ví dụ NixOS) thì ẩn icon này đi
+    exit 0
+fi
